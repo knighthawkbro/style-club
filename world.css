@@ -1,0 +1,162 @@
+/* The boutique and the close-up share one real, fitted 3D character. */
+main { max-width: 1510px; padding-top: 28px; }
+.intro { margin-bottom: 25px; }
+.intro h1 { font-size: 38px; }
+.studio-grid { grid-template-columns: minmax(0, 1.65fr) minmax(320px, .85fr); gap: 27px; }
+.scene.scene-3d { height: 604px; background: #eedfe5; }
+.scene-3d:after { display: none; }
+.world-host { position: absolute; inset: 0; width: 100%; height: 100%; }
+.world-canvas { display: block; width: 100%; height: 100%; touch-action: none; outline-offset: -5px !important; cursor: grab; }
+.world-canvas:active { cursor: grabbing; }
+.world-loading { height: 100%; display: grid; place-items: center; font: italic 22px var(--serif); color: #947284; }
+.world-view-switch { position: absolute; top: 17px; left: 17px; display: flex; gap: 3px; padding: 4px; border: 1px solid #e0cad4; border-radius: 25px; background: #fff9f0dd; box-shadow: 0 2px 8px #82657510; }
+.world-view-switch button { border-radius: 20px; padding: 9px 14px; font-size: 11px; color: #96768a; }
+.world-view-switch button.active { background: #a25d7d; color: #fffaf3; }
+.world-key-hint { position: absolute; left: 21px; top: 71px; font-size: 9px; letter-spacing: 1px; font-weight: 700; color: #855c72; text-shadow: 0 1px 3px #fff; pointer-events: none; }
+.world-key-hint span { font-size: 9px; letter-spacing: 0; font-weight: 400; margin-left: 6px; }
+.world-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 9px 12px; border-radius: 20px; background: #fff9f0db; font-size: 9px; color: #90657e; white-space: nowrap; pointer-events: none; box-shadow: 0 1px 7px #76566b0d; }
+.world-camera-controls { position: absolute; right: 16px; bottom: 62px; display: flex; gap: 5px; }
+.world-camera-controls button { border: 1px solid #dfc9d2; background: #fff9f0e6; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; color: #97647c; box-shadow: 0 2px 5px #77556810; }
+.world-camera-controls button svg { width: 17px; height: 17px; }
+.walk-pad { position: absolute; left: 16px; bottom: 51px; display: grid; grid-template-columns: repeat(3, 33px); grid-template-rows: repeat(3, 33px); gap: 3px; }
+.walk-pad button { background: #fff9f0e8; border: 1px solid #ddc2d0; border-radius: 10px; display: grid; place-items: center; font-size: 19px; color: #9e6685; touch-action: none; user-select: none; box-shadow: 0 2px 5px #70506b10; }
+.walk-pad button:active { background: #a46281; color: #fff; }
+.walk-pad [data-move=up] { grid-column: 2; grid-row: 1; }
+.walk-pad [data-move=left] { grid-column: 1; grid-row: 2; }
+.walk-pad span { grid-column: 2; grid-row: 2; display: grid; place-items: center; color: #b2829b; font-size: 22px; }
+.walk-pad [data-move=right] { grid-column: 3; grid-row: 2; }
+.walk-pad [data-move=down] { grid-column: 2; grid-row: 3; }
+.nearby-button { position: absolute; bottom: 77px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 12px 17px; border-radius: 24px; color: #fffaf5; background: #9a5677; font-size: 11px; box-shadow: 0 3px 14px #77516f2b; white-space: nowrap; }
+.nearby-button:not(:disabled):active { transform: translateX(-50%) translateY(1px); }
+.nearby-button kbd { display: grid; place-items: center; font: 10px var(--sans); width: 22px; height: 22px; border: 1px solid #e7ccdc; border-radius: 5px; background: #ffffff18; }
+.fitting-view .walk-pad, .fitting-view .world-key-hint, .fitting-view .nearby-button { display: none; }
+.graphics-status { position: absolute; left: 20px; right: 20px; bottom: 20px; border-radius: 12px; background: #fff8e4; padding: 15px; font-size: 12px; line-height: 1.6; text-align: center; }
+.graphics-fallback .world-view-switch, .graphics-fallback .world-camera-controls, .graphics-fallback .world-hint, .graphics-fallback .world-key-hint, .graphics-fallback .walk-pad { display: none; }
+.graphics-fallback .avatar { height: 450px; width: 240px; bottom: 100px; }
+.wardrobe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 475px; min-height: 475px; }
+.item-art { height: 105px; padding: 9px 22px; }
+.item-card { min-height: 150px; }
+.wardrobe-heading h2 { font-size: 27px; }
+.category-tab { font-size: 9px; padding: 11px 3px 13px; }
+.category-tab svg { width: 20px; height: 20px; }
+.color-heading { font-size: 10px; }
+.color-bar .swatches { gap: 5px; }
+.swatch { width: 26px; height: 26px; }
+.wardrobe-bottom { flex-direction: column-reverse; gap: 10px; padding-top: 16px; }
+.wardrobe-bottom .primary-button { width: 100%; padding: 14px; font-size: 12px; }
+.little-note { max-width: none; }
+.skin-bar { gap: 12px; }
+.skin-bar .swatches { gap: 5px; }
+.look-card-preview img { width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 1; }
+.runway-stage { min-height: 620px; }
+.runway-avatar { position: absolute; inset: 110px 0 0; width: 100%; height: calc(100% - 110px); transform: none; animation: none; }
+.runway-avatar .world-canvas { cursor: default; }
+.runway-floor { display: none; }
+.runway-lights { pointer-events: none; }
+.runway-result { padding-top: 50px; }
+.category-tabs { grid-template-columns: repeat(7, minmax(0, 1fr)); margin-bottom: 8px; }
+.wardrobe-tip { min-height: 28px; font-size: 10px; line-height: 1.5; color: #947182; margin: 0 0 10px; }
+.item-card { user-select: none; cursor: grab; }
+.item-card:active { cursor: grabbing; }
+.new-piece { position: absolute; top: 9px; left: 9px; border-radius: 8px; padding: 4px 6px; background: #fff9eeed; color: #ad7483; font-size: 7px; letter-spacing: 1px; font-weight: 700; }
+.fullscreen-button, .friends-button, .rack-next-button { position: absolute; display: flex; align-items: center; justify-content: center; gap: 6px; background: #fffaf0ed; color: #89566f; border: 1px solid #ddc6d1; border-radius: 18px; padding: 9px 12px; font-size: 10px; box-shadow: 0 2px 7px #71536110; }
+.fullscreen-button { top: 20px; right: 16px; font-size: 19px; padding: 5px 10px; min-height: 35px; }
+.fullscreen-button span { font-size: 10px; }
+.friends-button { left: 18px; top: 100px; padding: 7px 11px; font-size: 10px; }
+.scene-3d .timer-chip { top: 65px; }
+.rack-next-button { left: 50%; transform: translateX(-50%); bottom: 50px; padding: 6px 12px; font-size: 9px; }
+.fitting-view .friends-button, .fitting-view .rack-next-button { display: none; }
+.rack-hover { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); max-width: 60%; padding: 9px 13px; border-radius: 16px; background: #fff8edf0; color: #79576c; font-size: 10px; line-height: 1.4; text-align: center; pointer-events: none; }
+.pose-picker { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; padding: 11px 13px; background: #fbf3ee; border-top: 1px solid #eadadf; }
+.pose-picker button { min-height: 43px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 5px; border: 1px solid #e4cfd8; border-radius: 9px; font-size: 10px; color: #956b80; background: #fffaf4; }
+.pose-picker button span { font-size: 18px; }
+.pose-picker button[aria-pressed=true] { color: #fff9ef; background: #a25d7d; border-color: #a25d7d; }
+.drag-preview { position: fixed; z-index: 100; pointer-events: none; width: 104px; padding: 9px; border-radius: 15px; background: #fffaf3ee; border: 2px solid #bb7998; box-shadow: 0 8px 25px #75506333; transform: rotate(5deg); }
+.drag-preview svg { display: block; width: 82px; height: 93px; }
+.drag-preview strong { display: block; margin-top: 5px; color: #875570; font-size: 10px; text-align: center; }
+.character-drop-target { position: fixed; z-index: 90; pointer-events: none; border: 2px dashed #ad6f92; border-radius: 42%; background: #edc9df16; box-shadow: 0 0 0 5px #fff9ef70; }
+.character-drop-target span { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #a56282; padding: 8px 14px; border-radius: 20px; color: white; font-size: 12px; white-space: nowrap; }
+.character-drop-target.ready { background: #a2c9a42c; border-color: #749b77; box-shadow: 0 0 0 7px #effbe39c; }
+.character-drop-target.ready span { background: #6b916f; }
+.dressing-drag, .dressing-drag * { cursor: grabbing !important; user-select: none !important; }
+.graphics-fallback .friends-button, .graphics-fallback .rack-next-button { display: none; }
+.fullscreen-game { background: #faf7f2; }
+.fullscreen-game .site-header { height: 54px; }
+.fullscreen-game .brand { font-size: 26px; }
+.fullscreen-game .brand-mark { font-size: 36px; }
+.fullscreen-game .intro, .fullscreen-game .studio-footer, .fullscreen-game .site-footer { display: none; }
+.fullscreen-game #lookbook-view .intro { display: flex; }
+.fullscreen-game main { max-width: none; padding: 12px 18px; }
+@media (min-width: 901px) {
+  .fullscreen-game { overflow: hidden; }
+  .fullscreen-game main { height: calc(100dvh - 54px); }
+  .fullscreen-game #studio-view, .fullscreen-game .studio-grid { height: 100%; }
+  .fullscreen-game .studio-grid { grid-template-columns: minmax(0,1fr) minmax(300px,27%); gap: 20px; }
+  .fullscreen-game .stage-panel { display: flex; flex-direction: column; min-height: 0; }
+  .fullscreen-game .scene.scene-3d { flex: 1; min-height: 180px; height: auto; }
+  .fullscreen-game .theme-banner, .fullscreen-game .stage-controls, .fullscreen-game .pose-picker { flex-shrink: 0; }
+  .fullscreen-game .theme-banner { padding: 12px 18px; }
+  .fullscreen-game .wardrobe { min-height: 0; }
+  .fullscreen-game .wardrobe-grid { min-height: 0; max-height: none; flex: 1; }
+  .fullscreen-game .color-bar { padding: 12px 0; }
+  .fullscreen-game #lookbook-view { max-height: 100%; overflow-y: auto; }
+}
+@media (min-width: 1450px) {
+  .scene.scene-3d { height: 656px; }
+  .wardrobe-grid { max-height: 527px; min-height: 527px; }
+  .item-art { height: 123px; }
+  .item-card { min-height: 168px; }
+}
+@media (max-width: 1100px) {
+  .studio-grid { grid-template-columns: minmax(0, 1fr) 310px; gap: 22px; }
+  .wardrobe-heading h2 { font-size: 25px; }
+  .world-camera-controls { right: 12px; bottom: 59px; }
+  .world-camera-controls button { width: 31px; height: 31px; }
+  .nearby-button { bottom: 120px; padding: 10px 13px; }
+  .swatch { width: 24px; height: 24px; }
+  .walk-pad { left: 12px; }
+  .world-view-switch { left: 12px; top: 12px; }
+  .world-view-switch button { font-size: 10px; padding: 8px 12px; }
+  .world-key-hint { left: 15px; top: 64px; }
+}
+@media (max-width: 800px) {
+  .studio-grid { grid-template-columns: minmax(0, 1fr) 270px; gap: 17px; }
+  .scene.scene-3d { height: 631px; }
+  .wardrobe-grid { max-height: 460px; min-height: 460px; }
+  .item-art { height: 101px; padding: 10px 20px; }
+  .item-card { min-height: 145px; }
+  .wardrobe-heading h2 { font-size: 22px; }
+  .category-tab { font-size: 8px; }
+  .world-hint { white-space: normal; width: 88%; text-align: center; line-height: 1.5; }
+  .world-key-hint { display: none; }
+  .walk-pad { grid-template-columns: repeat(3, 30px); grid-template-rows: repeat(3, 30px); bottom: 65px; }
+  .world-camera-controls { bottom: 65px; gap: 3px; }
+  .world-camera-controls button { width: 28px; height: 28px; }
+  .fullscreen-button span { display: none; }
+  .fullscreen-button { top: 14px; right: 11px; padding: 4px 8px; }
+  .world-view-switch button { padding: 8px 9px; font-size: 9px; }
+  .friends-button { top: 62px; left: 13px; font-size: 9px; }
+  .pose-picker { gap: 5px; padding: 9px; }
+  .pose-picker button { font-size: 8px; flex-direction: column; gap: 2px; }
+}
+@media (max-width: 700px) {
+  .studio-grid { display: flex; flex-direction: column; gap: 27px; }
+  .scene.scene-3d { height: 480px; }
+  .world-hint { width: auto; white-space: nowrap; font-size: 8px; }
+  .world-view-switch button { font-size: 10px; padding: 9px 11px; }
+  .walk-pad { grid-template-columns: repeat(3, 36px); grid-template-rows: repeat(3, 36px); bottom: 52px; }
+  .world-camera-controls { bottom: 58px; gap: 4px; }
+  .world-camera-controls button { width: 32px; height: 32px; }
+  .nearby-button { bottom: 144px; }
+  .rack-next-button { bottom: 116px; }
+  .wardrobe-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: 355px; min-height: 355px; }
+  .item-art { height: 118px; padding: 12px 17px; }
+  .item-card { min-height: 168px; }
+  .wardrobe-heading h2 { font-size: 29px; }
+  .category-tab { font-size: 9px; }
+  .category-tab svg { width: 22px; height: 22px; }
+  .runway-stage { min-height: 460px; }
+  .runway-avatar { inset: 89px 0 0; height: calc(100% - 89px); }
+  .runway-result { padding-top: 25px; }
+  .fullscreen-game .scene.scene-3d { height: calc(100dvh - 235px); min-height: 360px; }
+}

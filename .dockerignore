@@ -1,0 +1,14 @@
+# Send only the files needed to run the bundled game to Docker.
+**
+!Dockerfile
+!server.js
+!index.html
+!styles.css
+!world.css
+!game.js
+!art.js
+!app.js
+!scene3d.js
+!favicon.svg
+!vendor/
+!vendor/THREE-LICENSE.txt

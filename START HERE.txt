@@ -1,0 +1,27 @@
+Welcome to Style Club!
+
+To play, double-click index.html. Choose Microsoft Edge, Chrome, Firefox, or Safari if your computer asks which app to use.
+
+Keep the game files together in this folder. If you received a ZIP file, extract the whole ZIP first.
+
+No Roblox, account, installation, or internet connection is needed.
+
+Explore your 3D boutique! Click the floor to walk or click a clothing rack to visit it. You can also click the room and use WASD, the arrow keys, or the on-screen arrows.
+
+Drag to look around. Near a rack, press E or the Try button. Choose a piece in the dressing room to wear it. Outfit view lets you turn the character and see every side.
+
+NEW: Drag clothes straight from a 3D rack onto your character! You can also drag the dressing-room cards with the mouse. Look for the "Drop to wear" outline. Near a rack, "More on this rack" shows more choices.
+
+Try the Makeup tab and Face view for face paint and cheek colors. Fresh face washes it off. Strike a pose opens eight poses, including a twirl and a superhero pose.
+
+Poppy, Nova, and Jules are computer-controlled shoppers who walk around and try new outfits. They are part of the game, not people on the internet. Tap "3 boutique friends" for a quiet room.
+
+Use Full screen to fill the display. Exit full screen or Escape takes you back. If your browser cannot use full screen, the game expands to fill the window instead.
+
+Choose a theme, try on clothes, and visit the runway. Free play gives you unlimited time. The three-minute challenge is completely optional.
+
+The 3D game needs a browser that supports WebGL 2. If it says graphics could not start, try a recent Edge or Chrome browser.
+
+Save your favorite outfits in My lookbook. The lookbook stays in this browser on this device. Download your favorite outfit pictures before clearing browser data or moving to a different computer.
+
+Have fun making something that's all you!

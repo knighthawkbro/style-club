@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf7f2">
+  <meta name="description" content="Your own little fashion world. Create outfits, play with themes, and take your look to the runway. A private, offline-friendly dress-up game.">
+  <title>Style Club — Your own little fashion world</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="world.css">
+  <script defer src="game.js"></script>
+  <script defer src="art.js"></script>
+  <script defer src="scene3d.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#wardrobe">Skip to wardrobe</a>
+  <header class="site-header">
+    <a class="brand" href="#studio" aria-label="Style Club home"><span class="brand-mark" aria-hidden="true">✳</span><span>style club<span class="brand-dot">.</span></span></a>
+    <nav aria-label="Main navigation">
+      <button class="nav-button active" data-view="studio" aria-current="page">The studio</button>
+      <button class="nav-button" data-view="lookbook">My lookbook <span id="look-count" class="count">0</span></button>
+    </nav>
+    <div class="header-actions">
+      <span class="just-you"><i></i> Your little world</span>
+      <button class="icon-button" id="sound-button" aria-label="Turn sound on" aria-pressed="false" title="Turn sound on"></button>
+      <button class="icon-button" id="help-button" aria-label="How to play" title="How to play"></button>
+    </div>
+  </header>
+
+  <main>
+    <section id="studio-view" aria-label="Dress-up studio">
+      <div class="intro">
+        <div><p class="eyebrow">A LITTLE WORLD, ALL YOURS</p><h1>Make a little <em>magic.</em><span class="heading-sparkle" aria-hidden="true">✧</span></h1><p class="intro-copy">Explore the boutique. Find your look. Make the runway yours.</p></div>
+        <div class="mode-switch" role="group" aria-label="Play mode"><button data-mode="free" aria-pressed="true" class="active">Free play</button><button data-mode="challenge" aria-pressed="false"><span data-icon="clock"></span>3-min challenge</button></div>
+      </div>
+
+      <div class="studio-grid">
+        <section class="stage-panel" aria-label="Your 3D boutique">
+          <div class="theme-banner"><span class="theme-icon" id="theme-icon" aria-hidden="true">✿</span><div><p class="eyebrow">YOUR STYLE CHALLENGE</p><button id="theme-button" class="theme-title" title="Choose a theme">Garden Party <span data-icon="chevron"></span></button><p id="theme-description">A little floral. A little fairy tale.</p></div><button id="new-theme-button" class="icon-button" aria-label="Surprise me with a theme" title="Surprise me with a theme"></button></div>
+          <div class="scene scene-3d" id="scene">
+            <div id="avatar" class="world-host"><p class="world-loading">Opening your little world…</p></div>
+            <div class="world-view-switch" role="group" aria-label="Camera view"><button id="explore-button" aria-pressed="true" class="active">Explore</button><button id="outfit-view-button" aria-pressed="false">Outfit view</button><button id="face-view-button" aria-pressed="false">Face view</button></div>
+            <button id="fullscreen-button" class="fullscreen-button" aria-label="Full screen" title="Full screen">⛶ <span>Full screen</span></button>
+            <button id="friends-button" class="friends-button" aria-pressed="true" title="Computer-controlled shoppers. Click for a quiet boutique.">✿ <span>3 boutique friends</span></button>
+            <button class="timer-chip" id="timer-button" hidden aria-label="Start three minute timer"><span data-icon="clock"></span><span id="timer-value">03:00</span><span id="timer-label">Start</span></button>
+            <div class="world-camera-controls" role="group" aria-label="Turn the view"><button id="turn-left-button" aria-label="Turn view left" title="Turn view left">↶</button><button id="front-view-button" aria-label="Front view" title="Front view"><span data-icon="hair"></span></button><button id="turn-right-button" aria-label="Turn view right" title="Turn view right">↷</button></div>
+            <div class="walk-pad" role="group" aria-label="Walking controls"><button data-move="up" aria-label="Walk forward">↑</button><button data-move="left" aria-label="Walk left">←</button><span aria-hidden="true">✳</span><button data-move="right" aria-label="Walk right">→</button><button data-move="down" aria-label="Walk backward">↓</button></div>
+            <button id="nearby-button" class="nearby-button" hidden><span id="nearby-label">Try on dresses</span><kbd>E</kbd></button>
+            <button id="rack-next-button" class="rack-next-button" hidden>More on this rack ↻</button>
+            <p class="world-hint" id="world-hint">Drag clothes onto yourself · click the floor to walk</p>
+            <p id="rack-hover" class="rack-hover" hidden></p>
+            <p class="world-key-hint">W A S D <span>or arrow keys to walk</span></p>
+            <p id="graphics-status" class="graphics-status" role="status" hidden></p>
+          </div>
+          <div class="stage-controls"><button id="undo-button" class="text-button" disabled><span data-icon="undo"></span>Undo</button><button id="pose-button" class="text-button" aria-expanded="false" aria-controls="pose-picker"><span data-icon="sparkles"></span>Strike a pose</button><button id="shuffle-button" class="text-button"><span data-icon="shuffle"></span>Surprise me</button></div>
+          <div id="pose-picker" class="pose-picker" role="group" aria-label="Choose a pose" hidden></div>
+        </section>
+
+        <section id="wardrobe" class="wardrobe" aria-labelledby="wardrobe-title">
+          <div class="wardrobe-heading"><div><p class="eyebrow">A CLOSET FULL OF POSSIBILITIES</p><h2 id="wardrobe-title">The dressing room</h2></div><span id="item-count" class="item-count">8 pieces</span></div>
+          <div id="category-tabs" class="category-tabs" role="tablist" aria-label="Wardrobe categories"></div>
+          <p class="wardrobe-tip" id="wardrobe-tip">Drag a piece onto your character, or tap to wear.</p>
+          <div id="wardrobe-grid" class="wardrobe-grid" role="tabpanel" aria-label="Dresses" tabindex="0"></div>
+          <div class="color-bar" id="color-bar"><div class="color-heading"><span id="color-label">Make it your color</span><span id="color-name">Rosewater</span></div><div id="color-swatches" class="swatches" role="group" aria-label="Clothing colors"></div></div>
+          <div class="skin-bar" id="skin-bar" hidden><span>Skin tone</span><div id="skin-swatches" class="swatches" role="group" aria-label="Skin tones"></div></div>
+          <div class="wardrobe-bottom"><span class="little-note"><span data-icon="heart"></span>Every piece is yours. Always.</span><button id="runway-button" class="primary-button">Ready for the runway <span data-icon="arrow"></span></button></div>
+        </section>
+      </div>
+      <div class="studio-footer"><span><span data-icon="sparkles"></span>There’s no wrong way to be you.</span><button id="fresh-start-button">Start a fresh look <span data-icon="refresh"></span></button></div>
+    </section>
+
+    <section id="lookbook-view" hidden aria-labelledby="lookbook-title"><div class="intro"><div><p class="eyebrow">LITTLE LOOKS, BIG IMAGINATION</p><h1 id="lookbook-title">Your <em>lookbook.</em></h1><p class="intro-copy">A collection of your very own main-character moments.</p></div><button class="primary-button" data-view="studio">Create a look <span data-icon="plus"></span></button></div><p class="storage-note">Saved in this browser, on this device. Download your favorites to keep a copy.</p><div id="lookbook-grid" class="lookbook-grid"></div></section>
+  </main>
+  <footer class="site-footer"><span class="footer-brand">style club.</span><span>A little space to create, play & be yourself.</span><button id="grownups-button">For grown-ups <span data-icon="heart"></span></button></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="drag-preview" class="drag-preview" hidden aria-hidden="true"></div>
+  <div id="character-drop-target" class="character-drop-target" hidden><span>Drop to wear</span></div>
+
+  <dialog id="theme-dialog" class="theme-dialog"><button class="dialog-close icon-button" data-close aria-label="Close themes">×</button><p class="eyebrow">WHERE WILL YOUR IMAGINATION GO?</p><h2>Pick your next <em>chapter.</em></h2><p class="dialog-copy">Use the theme as a little spark. Make the rest your own.</p><div id="theme-grid" class="theme-grid"></div></dialog>
+
+  <dialog id="runway-dialog" class="runway-dialog"><button class="dialog-close icon-button" data-close aria-label="Back to dressing room">×</button><div class="runway-stage"><div class="runway-lights" aria-hidden="true"></div><p class="eyebrow">THE STYLE CLUB RUNWAY</p><h2>Your moment to <em>shine.</em></h2><div id="runway-avatar" class="runway-avatar"></div><div class="runway-floor" aria-hidden="true"></div><div id="confetti" aria-hidden="true"></div></div><div class="runway-result"><span class="result-kicker" id="result-theme"></span><div class="stars" id="result-stars" aria-label="Style stars"></div><h3 id="result-title"></h3><p id="result-description"></p><div id="result-badges" class="result-badges"></div><form id="save-form"><label for="look-name">Give your look a name</label><div class="save-row"><input id="look-name" maxlength="40" required autocomplete="off" placeholder="My magical moment"><button type="submit" class="primary-button" id="save-button"><span data-icon="heart"></span>Save look</button></div></form><div class="result-actions"><button class="text-button" id="back-to-style">Keep styling</button><button class="text-button" id="next-round">Next theme <span data-icon="arrow"></span></button></div></div></dialog>
+
+  <dialog id="help-dialog" class="info-dialog"><button class="dialog-close icon-button" data-close aria-label="Close instructions">×</button><div class="info-flower" aria-hidden="true">✳</div><p class="eyebrow">WELCOME TO YOUR LITTLE WORLD</p><h2>Let’s play <em>dress-up.</em></h2><ol class="howto-list"><li><span>01</span><div><h3>Explore your boutique</h3><p>Click the floor to walk, or use WASD, arrow keys, or the on-screen arrows. Drag the room to look around. Visit a rack and press E to browse. More on this rack brings out more pieces!</p></div></li><li><span>02</span><div><h3>Make a look you love</h3><p>Drag a piece from a rack or the dressing room onto your character. You can tap a card to wear it, too. Outfit view lets you see every side. Try Makeup and Face view for face paint; Fresh face washes it off.</p></div></li><li><span>03</span><div><h3>Take your runway moment</h3><p>Choose one of eight poses with Strike a pose, then visit the runway. Save your favorite outfits and poses in My lookbook.</p></div></li></ol><p class="tip">Full screen fills the display; Escape takes you back. Free play has no time limit. The boutique friends button lets you choose company or a quiet room.</p><button class="primary-button" data-close>Let’s make some magic <span data-icon="arrow"></span></button></dialog>
+
+  <dialog id="grownups-dialog" class="info-dialog"><button class="dialog-close icon-button" data-close aria-label="Close grown-up information">×</button><p class="eyebrow">A NOTE FOR GROWN-UPS</p><h2>Just a little room to <em>play.</em></h2><p>Style Club is an original, single-player dress-up game. It has no accounts, multiplayer, chat, ads, purchases, analytics, or external content.</p><p>Poppy, Nova, and Jules are computer-controlled shoppers who wander and try clothes. They are part of the game, not people on the internet. The boutique friends button switches to a quiet room.</p><p>All clothing is available from the start. Style stars celebrate outfit choices and the theme; they never judge a character’s body or appearance. The timer is optional and pauses when you switch away.</p><p>The current outfit and up to 40 saved looks stay in this browser’s local storage. Nothing is uploaded. Clearing browser data removes saved looks, so use the download button in the lookbook to keep favorites.</p><p>Once the files are on your computer, you can open <strong>index.html</strong> directly and play offline. This is an independent project, unaffiliated with Roblox or Dress to Impress.</p><button class="primary-button" data-close>Back to the fun</button></dialog>
+  <dialog id="confirm-dialog" class="info-dialog compact-dialog"><button class="dialog-close icon-button" data-close aria-label="Cancel">×</button><h2 id="confirm-title">Start fresh?</h2><p id="confirm-description">Your saved looks will stay in your lookbook.</p><div class="confirm-actions"><button class="secondary-button" data-close>Keep it</button><button class="primary-button" id="confirm-action">Start fresh</button></div></dialog>
+  <noscript><p class="noscript">Style Club needs JavaScript enabled to play. All game code runs on your device.</p></noscript>
+</body>
+</html>

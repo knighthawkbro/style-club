@@ -1,0 +1,214 @@
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.StyleGame = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+  const COLORS = [
+    { hex: '#db91a5', name: 'Rosewater' }, { hex: '#bda5d8', name: 'Lilac dream' },
+    { hex: '#8eafd1', name: 'Blue sky' }, { hex: '#a4bba1', name: 'Sage garden' },
+    { hex: '#edcc82', name: 'Buttercup' }, { hex: '#f0ad88', name: 'Peach fizz' },
+    { hex: '#f2e9d8', name: 'Vanilla cloud' }, { hex: '#a95665', name: 'Berry kiss' },
+    { hex: '#756689', name: 'Twilight' }, { hex: '#514859', name: 'Midnight' },
+    { hex: '#83bfb7', name: 'Sea glass' }, { hex: '#e4c2ad', name: 'Ballet slipper' }
+  ];
+  const HAIR_COLORS = [
+    { hex: '#493027', name: 'Chestnut' }, { hex: '#241e24', name: 'Soft black' },
+    { hex: '#8d5136', name: 'Cinnamon' }, { hex: '#bd814a', name: 'Caramel' },
+    { hex: '#e0ba76', name: 'Honey blonde' }, { hex: '#eee0ba', name: 'Platinum' },
+    { hex: '#d394a7', name: 'Candy pink' }, { hex: '#a58ebd', name: 'Lavender' }
+  ];
+  const SKIN_TONES = [
+    { hex: '#f4d7c5', name: 'Porcelain' }, { hex: '#e8b99a', name: 'Peach' },
+    { hex: '#d39c79', name: 'Golden' }, { hex: '#b87e59', name: 'Caramel' },
+    { hex: '#925c43', name: 'Warm brown' }, { hex: '#65402f', name: 'Deep brown' }
+  ];
+  const CATEGORIES = [
+    { id: 'dresses', label: 'Dresses', icon: 'dress' }, { id: 'tops', label: 'Tops', icon: 'shirt' },
+    { id: 'bottoms', label: 'Bottoms', icon: 'skirt' }, { id: 'shoes', label: 'Shoes', icon: 'shoe' },
+    { id: 'extras', label: 'Extras', icon: 'bow' }, { id: 'hair', label: 'Hair & you', icon: 'hair' },
+    { id: 'makeup', label: 'Makeup', icon: 'makeup' }
+  ];
+  const POSES = [
+    { name: 'Just me', icon: '✧' }, { name: 'Hand on hip', icon: '♡' },
+    { name: 'Hello!', icon: '✋' }, { name: 'Superstar', icon: '★' },
+    { name: 'Heart hug', icon: '♥' }, { name: 'Happy twirl', icon: '↻' },
+    { name: 'Little curtsy', icon: '✿' }, { name: 'Superhero', icon: '⚡' }
+  ];
+  const ITEMS = [
+    { id: 'petal', category: 'dresses', name: 'Petal party', detail: 'A little flower power', shape: 'petal', color: '#db91a5', tags: ['floral', 'pastel', 'fancy'] },
+    { id: 'cloud', category: 'dresses', name: 'Cloud nine', detail: 'Float into the room', shape: 'cloud', color: '#8eafd1', tags: ['pastel', 'dreamy', 'fancy'] },
+    { id: 'bow-dress', category: 'dresses', name: 'Bow belle', detail: 'Tied up in a bow', shape: 'bow', color: '#bda5d8', tags: ['pastel', 'cute', 'fancy'] },
+    { id: 'meadow', category: 'dresses', name: 'Meadow muse', detail: 'Fresh as a daisy', shape: 'meadow', color: '#a4bba1', tags: ['floral', 'nature', 'casual'] },
+    { id: 'starlight', category: 'dresses', name: 'After starlight', detail: 'A sky full of sparkle', shape: 'star', color: '#756689', tags: ['sparkle', 'dreamy', 'fancy'] },
+    { id: 'sunbeam', category: 'dresses', name: 'Sunbeam', detail: 'A pocket of sunshine', shape: 'sun', color: '#edcc82', tags: ['bright', 'summer', 'casual'] },
+    { id: 'ballgown', category: 'dresses', name: 'Storybook', detail: 'Once upon an outfit', shape: 'gown', color: '#bda5d8', tags: ['dreamy', 'fancy', 'sparkle'] },
+    { id: 'sailor', category: 'dresses', name: 'Seaside stroll', detail: 'Meet you by the sea', shape: 'sailor', color: '#8eafd1', tags: ['summer', 'casual', 'adventure'] },
+    { id: 'tee', category: 'tops', name: 'Everyday sunshine', detail: 'Your happy little tee', shape: 'tee', color: '#f2e9d8', tags: ['casual', 'bright', 'sporty'] },
+    { id: 'blouse', category: 'tops', name: 'Sweet collar', detail: 'Perfectly pretty', shape: 'blouse', color: '#e4c2ad', tags: ['cute', 'fancy', 'pastel'] },
+    { id: 'sweater', category: 'tops', name: 'Cozy cloud', detail: 'A wearable hug', shape: 'sweater', color: '#bda5d8', tags: ['cozy', 'pastel', 'casual'] },
+    { id: 'hoodie', category: 'tops', name: 'Daydream hoodie', detail: 'Ready for anything', shape: 'hoodie', color: '#a4bba1', tags: ['cozy', 'sporty', 'adventure'] },
+    { id: 'vest', category: 'tops', name: 'Book club', detail: 'One more chapter', shape: 'vest', color: '#a95665', tags: ['cozy', 'cute', 'adventure'] },
+    { id: 'sparkle-top', category: 'tops', name: 'Disco darling', detail: 'Bring your own sparkle', shape: 'sparkle', color: '#edcc82', tags: ['sparkle', 'bright', 'fancy'] },
+    { id: 'pleated', category: 'bottoms', name: 'Twirl time', detail: 'Made for spinning', shape: 'pleated', color: '#db91a5', tags: ['cute', 'fancy', 'pastel'] },
+    { id: 'jeans', category: 'bottoms', name: 'Blue jean dream', detail: 'An everyday favorite', shape: 'jeans', color: '#8eafd1', tags: ['casual', 'adventure', 'cozy'] },
+    { id: 'shorts', category: 'bottoms', name: 'Sunny days', detail: 'Hello, adventure', shape: 'shorts', color: '#edcc82', tags: ['summer', 'sporty', 'adventure'] },
+    { id: 'tutu', category: 'bottoms', name: 'Tiny dancer', detail: 'Layers of lovely', shape: 'tutu', color: '#bda5d8', tags: ['dreamy', 'pastel', 'fancy'] },
+    { id: 'trousers', category: 'bottoms', name: 'Sunday stroll', detail: 'Easy, breezy, you', shape: 'trousers', color: '#a4bba1', tags: ['nature', 'cozy', 'casual'] },
+    { id: 'flower-skirt', category: 'bottoms', name: 'Daisy chain', detail: 'A garden to go', shape: 'flower', color: '#f0ad88', tags: ['floral', 'summer', 'nature'] },
+    { id: 'maryjanes', category: 'shoes', name: 'Ballet days', detail: 'A lovely little step', shape: 'maryjane', color: '#e4c2ad', tags: ['fancy', 'cute', 'pastel'] },
+    { id: 'sneakers', category: 'shoes', name: 'Happy steps', detail: 'Let’s go places', shape: 'sneaker', color: '#f2e9d8', tags: ['casual', 'sporty', 'adventure'] },
+    { id: 'boots', category: 'shoes', name: 'Rain or shine', detail: 'Puddle-jump approved', shape: 'boot', color: '#a4bba1', tags: ['nature', 'adventure', 'cozy'] },
+    { id: 'sandals', category: 'shoes', name: 'Golden hour', detail: 'Toes in the sunshine', shape: 'sandal', color: '#edcc82', tags: ['summer', 'floral', 'casual'] },
+    { id: 'star-boots', category: 'shoes', name: 'Moonwalkers', detail: 'Out of this world', shape: 'starboot', color: '#bda5d8', tags: ['sparkle', 'dreamy', 'bright'] },
+    { id: 'slippers', category: 'shoes', name: 'Cloud slippers', detail: 'The cozy life', shape: 'slipper', color: '#db91a5', tags: ['cozy', 'cute', 'pastel'] },
+    { id: 'hair-bow', category: 'extras', slot: 'head', name: 'The big bow', detail: 'The finishing touch', shape: 'hairbow', color: '#db91a5', tags: ['cute', 'pastel', 'fancy'] },
+    { id: 'flower-crown', category: 'extras', slot: 'head', name: 'Flower child', detail: 'A crown from the garden', shape: 'crown', color: '#f0ad88', tags: ['floral', 'nature', 'dreamy'] },
+    { id: 'beret', category: 'extras', slot: 'head', name: 'Bonjour beret', detail: 'A little artsy', shape: 'beret', color: '#a95665', tags: ['cozy', 'cute', 'adventure'] },
+    { id: 'tiara', category: 'extras', slot: 'head', name: 'Wish upon a star', detail: 'Your royal moment', shape: 'tiara', color: '#edcc82', tags: ['sparkle', 'fancy', 'dreamy'] },
+    { id: 'bag', category: 'extras', slot: 'bag', name: 'Pocket of petals', detail: 'Carry a little joy', shape: 'bag', color: '#f2e9d8', tags: ['floral', 'cute', 'summer'] },
+    { id: 'heart-bag', category: 'extras', slot: 'bag', name: 'Love letter', detail: 'Wear your heart out', shape: 'heartbag', color: '#db91a5', tags: ['cute', 'bright', 'fancy'] },
+    { id: 'pearls', category: 'extras', slot: 'neck', name: 'Little treasures', detail: 'A string of lovely', shape: 'pearls', color: '#f2e9d8', tags: ['fancy', 'pastel', 'dreamy'] },
+    { id: 'wings', category: 'extras', slot: 'back', name: 'Fairy wishes', detail: 'Let your dreams take flight', shape: 'wings', color: '#bda5d8', tags: ['dreamy', 'nature', 'sparkle'] },
+    { id: 'rainbow-dress', category: 'dresses', name: 'Rainbow parade', detail: 'Every color, all together', shape: 'rainbow', color: '#db91a5', tags: ['bright', 'dreamy', 'summer'], fresh: true },
+    { id: 'cosmic-gown', category: 'dresses', name: 'Galaxy queen', detail: 'A whole galaxy of stars', shape: 'cosmic', color: '#756689', tags: ['sparkle', 'dreamy', 'fancy'], fresh: true },
+    { id: 'butterfly-dress', category: 'dresses', name: 'Butterfly picnic', detail: 'Little wings, big dreams', shape: 'butterfly', color: '#83bfb7', tags: ['nature', 'floral', 'dreamy'], fresh: true },
+    { id: 'cupcake-dress', category: 'dresses', name: 'Cupcake confetti', detail: 'Ruffles on ruffles', shape: 'cupcake', color: '#f0ad88', tags: ['cute', 'pastel', 'fancy'], fresh: true },
+    { id: 'bomber', category: 'tops', name: 'Rocket club', detail: 'Ready for takeoff', shape: 'bomber', color: '#83bfb7', tags: ['sporty', 'adventure', 'sparkle'], fresh: true },
+    { id: 'denim-jacket', category: 'tops', name: 'Denim daydream', detail: 'Pockets for little treasures', shape: 'denim', color: '#8eafd1', tags: ['casual', 'adventure', 'cozy'], fresh: true },
+    { id: 'stripe-tee', category: 'tops', name: 'Candy stripes', detail: 'A bright little classic', shape: 'stripes', color: '#db91a5', tags: ['bright', 'summer', 'casual'], fresh: true },
+    { id: 'varsity', category: 'tops', name: 'Team sparkle', detail: 'Everyone belongs on this team', shape: 'varsity', color: '#a95665', tags: ['sporty', 'cute', 'cozy'], fresh: true },
+    { id: 'cargo', category: 'bottoms', name: 'Treasure hunter', detail: 'So many useful pockets', shape: 'cargo', color: '#a4bba1', tags: ['adventure', 'nature', 'casual'], fresh: true },
+    { id: 'flare', category: 'bottoms', name: 'Disco flares', detail: 'A little extra swish', shape: 'flare', color: '#bda5d8', tags: ['sparkle', 'fancy', 'bright'], fresh: true },
+    { id: 'star-skirt', category: 'bottoms', name: 'Shooting stars', detail: 'Twinkle with every step', shape: 'star-skirt', color: '#756689', tags: ['sparkle', 'dreamy', 'fancy'], fresh: true },
+    { id: 'lace-boots', category: 'shoes', name: 'Adventure laces', detail: 'Lace up, head out', shape: 'laceboot', color: '#a95665', tags: ['adventure', 'cozy', 'casual'], fresh: true },
+    { id: 'high-tops', category: 'shoes', name: 'Playground pop', detail: 'High tops, happy feet', shape: 'hightop', color: '#83bfb7', tags: ['sporty', 'bright', 'casual'], fresh: true },
+    { id: 'cat-ears', category: 'extras', slot: 'head', name: 'Kitten club', detail: 'A purr-fect little headband', shape: 'catears', color: '#e4c2ad', tags: ['cute', 'cozy', 'dreamy'], fresh: true },
+    { id: 'headphones', category: 'extras', slot: 'head', name: 'My own beat', detail: 'Dance to your own tune', shape: 'headphones', color: '#bda5d8', tags: ['sporty', 'bright', 'casual'], fresh: true },
+    { id: 'hero-cape', category: 'extras', slot: 'back', name: 'Everyday hero', detail: 'Kindness is a superpower', shape: 'cape', color: '#db91a5', tags: ['adventure', 'dreamy', 'bright'], fresh: true },
+    { id: 'fresh-face', category: 'makeup', name: 'Fresh face', detail: 'Take the face paint off', shape: 'none', color: '#db91a5', tags: [] },
+    { id: 'rosy', category: 'makeup', name: 'Rosy glow', detail: 'Soft cheeks and a rosy smile', shape: 'rosy', color: '#db91a5', tags: [] },
+    { id: 'sunset', category: 'makeup', name: 'Peach sunset', detail: 'A warm sweep of color', shape: 'sunset', color: '#f0ad88', tags: [] },
+    { id: 'stardust', category: 'makeup', name: 'Stardust', detail: 'Twinkly stars for your cheeks', shape: 'stardust', color: '#bda5d8', tags: [] },
+    { id: 'rainbow-paint', category: 'makeup', name: 'Rainbow cheeks', detail: 'A tiny rainbow on each side', shape: 'rainbow', color: '#8eafd1', tags: [] },
+    { id: 'butterfly-paint', category: 'makeup', name: 'Butterfly magic', detail: 'Little wings around your eyes', shape: 'butterfly', color: '#bda5d8', tags: [] },
+    { id: 'freckles', category: 'makeup', name: 'Sunny freckles', detail: 'A sprinkle of sunshine', shape: 'freckles', color: '#e4c2ad', tags: [] },
+    { id: 'kitty-paint', category: 'makeup', name: 'Kitty whiskers', detail: 'A nose and playful whiskers', shape: 'kitty', color: '#db91a5', tags: [] },
+    { id: 'waves', category: 'hair', name: 'Soft waves', detail: 'Go with the flow', shape: 'waves', color: '#493027', tags: [] },
+    { id: 'bob', category: 'hair', name: 'The little bob', detail: 'Short & sweet', shape: 'bob', color: '#8d5136', tags: [] },
+    { id: 'curls', category: 'hair', name: 'Cloud curls', detail: 'Big, beautiful curls', shape: 'curls', color: '#241e24', tags: [] },
+    { id: 'ponytail', category: 'hair', name: 'Sky-high pony', detail: 'Up for anything', shape: 'pony', color: '#bd814a', tags: [] },
+    { id: 'buns', category: 'hair', name: 'Space buns', detail: 'Double the daydream', shape: 'buns', color: '#a58ebd', tags: [] },
+    { id: 'braids', category: 'hair', name: 'Ribbon braids', detail: 'Two of a kind', shape: 'braids', color: '#e0ba76', tags: [] }
+  ];
+  const THEMES = [
+    { id: 'garden', name: 'Garden Party', icon: '✿', description: 'A little floral. A little fairy tale.', hint: 'Think flowers, soft colors, and an afternoon in the sunshine.', tags: ['floral', 'nature', 'pastel'], colors: ['#db91a5', '#a4bba1', '#f0ad88', '#e4c2ad'], bg: '#f0dfdf' },
+    { id: 'fairy', name: 'Fairy Tale', icon: '✧', description: 'Once upon a wonderful wardrobe.', hint: 'Dreamy layers, a little sparkle, and a sprinkle of make-believe.', tags: ['dreamy', 'fancy', 'sparkle'], colors: ['#bda5d8', '#db91a5', '#edcc82'], bg: '#e6dff0' },
+    { id: 'cozy', name: 'Cozy Sunday', icon: '☁', description: 'A warm hug, but make it fashion.', hint: 'Soft sweaters, comfy shoes, and your favorite daydreams.', tags: ['cozy', 'casual', 'cute'], colors: ['#e4c2ad', '#a95665', '#f2e9d8'], bg: '#efe2d6' },
+    { id: 'starlight', name: 'Starlight Soirée', icon: '✦', description: 'The stars have a little competition.', hint: 'Shimmer, twinkle, and dress for a night under the stars.', tags: ['sparkle', 'dreamy', 'fancy'], colors: ['#756689', '#514859', '#bda5d8', '#edcc82'], bg: '#e0dfed' },
+    { id: 'summer', name: 'Hello, Sunshine', icon: '☀', description: 'A little sunshine in every stitch.', hint: 'Sunny colors, easy outfits, and a day by the sea.', tags: ['summer', 'bright', 'casual'], colors: ['#edcc82', '#f0ad88', '#8eafd1', '#83bfb7'], bg: '#f2e9cf' },
+    { id: 'adventure', name: 'Little Explorer', icon: '✳', description: 'Big adventures start with little steps.', hint: 'Comfy layers and shoes made for your next adventure.', tags: ['adventure', 'sporty', 'nature'], colors: ['#a4bba1', '#8eafd1', '#edcc82'], bg: '#e0e8da' }
+  ];
+  const byId = Object.fromEntries(ITEMS.map(item => [item.id, item]));
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const piece = id => ({ id, color: byId[id].color });
+  function defaultOutfit() {
+    return { dress: piece('petal'), top: null, bottom: null, shoes: piece('maryjanes'), hair: 'waves', hairColor: '#493027', skin: '#d39c79', makeup: 'fresh-face', makeupColor: '#db91a5', extras: { head: piece('hair-bow'), bag: null, neck: null, back: null } };
+  }
+  function selection(outfit, item) {
+    if (item.category === 'hair') return outfit.hair === item.id;
+    if (item.category === 'makeup') return (outfit.makeup || 'fresh-face') === item.id;
+    if (item.category === 'extras') return outfit.extras[item.slot]?.id === item.id;
+    const key = { dresses: 'dress', tops: 'top', bottoms: 'bottom', shoes: 'shoes' }[item.category];
+    return outfit[key]?.id === item.id;
+  }
+  function equip(outfit, id) {
+    const item = Object.hasOwn(byId, id) ? byId[id] : null;
+    if (!item) return clone(outfit);
+    const next = clone(outfit);
+    if (item.category !== 'extras' && selection(next, item)) return next;
+    if (item.category === 'hair') next.hair = id;
+    else if (item.category === 'makeup') { next.makeup = id; next.makeupColor = item.color; }
+    else if (item.category === 'extras') next.extras[item.slot] = selection(next, item) ? null : piece(id);
+    else if (item.category === 'dresses') { next.dress = piece(id); next.top = null; next.bottom = null; }
+    else if (item.category === 'tops') { next.dress = null; next.top = piece(id); next.bottom ||= piece('pleated'); }
+    else if (item.category === 'bottoms') { next.dress = null; next.bottom = piece(id); next.top ||= piece('tee'); }
+    else next.shoes = piece(id);
+    return next;
+  }
+  // A drop always puts an item on; only clicking an accessory toggles it off.
+  function wear(outfit, id) {
+    const item = Object.hasOwn(byId, id) ? byId[id] : null;
+    return item && selection(outfit, item) ? clone(outfit) : equip(outfit, id);
+  }
+  function recolor(outfit, id, color) {
+    const next = clone(outfit);
+    const item = Object.hasOwn(byId, id) ? byId[id] : null;
+    if (!item || !selection(next, item)) return next;
+    if (item.category === 'hair') {
+      if (HAIR_COLORS.some(c => c.hex === color)) next.hairColor = color;
+    } else if (item.category === 'makeup') {
+      if (item.shape !== 'none' && COLORS.some(c => c.hex === color)) next.makeupColor = color;
+    } else if (COLORS.some(c => c.hex === color)) {
+      const target = item.category === 'extras' ? next.extras[item.slot] : next[{ dresses: 'dress', tops: 'top', bottoms: 'bottom', shoes: 'shoes' }[item.category]];
+      target.color = color;
+    }
+    return next;
+  }
+  function worn(outfit) { return [outfit.dress, outfit.top, outfit.bottom, outfit.shoes, ...Object.values(outfit.extras)].filter(Boolean); }
+  function randomOutfit(outfit, random = Math.random) {
+    const pick = array => array[Math.min(array.length - 1, Math.floor(random() * array.length))];
+    let next = defaultOutfit();
+    next.skin = outfit.skin;
+    next.makeup = outfit.makeup || 'fresh-face'; next.makeupColor = outfit.makeupColor || '#db91a5';
+    const palette = pick(COLORS).hex;
+    if (random() > 0.35) next = equip(next, pick(ITEMS.filter(i => i.category === 'dresses')).id);
+    else { next = equip(next, pick(ITEMS.filter(i => i.category === 'tops')).id); next = equip(next, pick(ITEMS.filter(i => i.category === 'bottoms')).id); }
+    next = equip(next, pick(ITEMS.filter(i => i.category === 'shoes')).id);
+    next.hair = pick(ITEMS.filter(i => i.category === 'hair')).id;
+    next.hairColor = pick(HAIR_COLORS).hex;
+    next.extras.head = piece(pick(ITEMS.filter(i => i.slot === 'head')).id);
+    next.extras.bag = random() > 0.5 ? piece(pick(ITEMS.filter(i => i.slot === 'bag')).id) : null;
+    for (const p of worn(next)) if (random() > 0.35) p.color = palette;
+    return next;
+  }
+  function score(outfit, themeId) {
+    const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+    const pieces = worn(outfit);
+    const matches = pieces.filter(p => byId[p.id]?.tags.some(tag => theme.tags.includes(tag))).length;
+    const palette = pieces.some(p => theme.colors.includes(p.color));
+    const stars = 3 + Number(matches >= 2) + Number(matches >= 3 && palette);
+    return {
+      stars, title: stars === 5 ? 'A little bit of magic!' : stars === 4 ? 'Hello, style star!' : 'Uniquely, wonderfully you!',
+      description: stars === 5 ? `Your colors and pieces bring ${theme.name} to life. What a lovely way to tell a story!` : stars === 4 ? `Your outfit has a lovely ${theme.name} feeling. Try a theme-inspired color or another accessory for more stars!` : 'You brought your own imagination to the runway. Try pieces and colors inspired by the theme for more stars!',
+      badges: ['Your own creation', ...(matches >= 2 ? ['Theme dream'] : []), ...(palette ? ['Color story'] : [])]
+    };
+  }
+  function sanitizeOutfit(raw) {
+    const fallback = defaultOutfit();
+    if (!raw || typeof raw !== 'object') return fallback;
+    const safePiece = (p, category, slot) => p && typeof p.id === 'string' && Object.hasOwn(byId, p.id) && byId[p.id].category === category && (!slot || byId[p.id].slot === slot) ? { id: p.id, color: COLORS.some(c => c.hex === p.color) ? p.color : byId[p.id].color } : null;
+    const result = {
+      dress: safePiece(raw.dress, 'dresses'), top: safePiece(raw.top, 'tops'), bottom: safePiece(raw.bottom, 'bottoms'), shoes: safePiece(raw.shoes, 'shoes') || fallback.shoes,
+      hair: ITEMS.some(i => i.category === 'hair' && i.id === raw.hair) ? raw.hair : fallback.hair,
+      hairColor: HAIR_COLORS.some(c => c.hex === raw.hairColor) ? raw.hairColor : fallback.hairColor,
+      skin: SKIN_TONES.some(c => c.hex === raw.skin) ? raw.skin : fallback.skin, extras: {}
+    };
+    result.makeup = ITEMS.some(i => i.category === 'makeup' && i.id === raw.makeup) ? raw.makeup : 'fresh-face';
+    result.makeupColor = COLORS.some(c => c.hex === raw.makeupColor) ? raw.makeupColor : byId[result.makeup].color;
+    if (result.dress) { result.top = null; result.bottom = null; }
+    else { result.top ||= piece('tee'); result.bottom ||= piece('pleated'); }
+    for (const slot of ['head', 'bag', 'neck', 'back']) result.extras[slot] = safePiece(raw.extras?.[slot], 'extras', slot);
+    return result;
+  }
+  function sanitizeLooks(raw) {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set();
+    return raw.filter(look => {
+      if (!look || typeof look.id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(look.id) || seen.has(look.id) || !look.outfit) return false;
+      seen.add(look.id); return true;
+    }).slice(0, 40).map(look => ({ id: look.id, name: typeof look.name === 'string' ? look.name.slice(0, 40) : 'My lovely look', themeId: THEMES.some(t => t.id === look.themeId) ? look.themeId : THEMES[0].id, outfit: sanitizeOutfit(look.outfit), pose:Number.isInteger(look.pose)&&look.pose>=0&&look.pose<POSES.length?look.pose:1, date: typeof look.date === 'string' && !Number.isNaN(Date.parse(look.date)) ? look.date : new Date(0).toISOString() }));
+  }
+  function remainingSeconds(deadline, now) { return Math.max(0, Math.ceil((deadline - now) / 1000)); }
+  return { COLORS, HAIR_COLORS, SKIN_TONES, CATEGORIES, ITEMS, POSES, THEMES, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, remainingSeconds };
+});
