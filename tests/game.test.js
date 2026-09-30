@@ -31,7 +31,7 @@ test('separates replace a dress, and a new dress removes both separates', () => 
 test('accessories coexist by slot, replace within a slot, and toggle off', () => {
   let outfit = G.equip(G.defaultOutfit(), 'wings');
   outfit = G.equip(outfit, 'bag'); outfit = G.equip(outfit, 'pearls'); outfit = G.equip(outfit, 'tiara');
-  assert.deepEqual(Object.values(outfit.extras).map(p => p.id), ['tiara', 'bag', 'pearls', 'wings']);
+  assert.deepEqual(Object.values(outfit.extras).filter(Boolean).map(p => p.id), ['tiara', 'bag', 'pearls', 'wings']);
   outfit = G.equip(outfit, 'tiara'); assert.equal(outfit.extras.head, null); assert.equal(outfit.extras.back.id, 'wings');
 });
 
@@ -133,4 +133,21 @@ test('saved poses are retained and invalid pose values recover safely', () => {
   const base={id:'pose-look',outfit:G.defaultOutfit(),name:'My pose'};
   for(let pose=0;pose<G.POSES.length;pose++)assert.equal(G.sanitizeLooks([{...base,pose}])[0].pose,pose);
   for(const pose of[-1,100,NaN,'5'])assert.equal(G.sanitizeLooks([{...base,pose}])[0].pose,1);
+});
+
+test('jewelry and a held pet coexist with bags and survive saving and removal', () => {
+  let outfit=G.defaultOutfit();
+  for(const id of['flower-earrings','charm-bracelet','heart-necklace','bow-kitten','bag'])outfit=G.wear(outfit,id);
+  assert.equal(G.worn(outfit).length,8);assert.deepEqual(G.sanitizeOutfit(outfit),outfit);
+  const changed=G.equip(outfit,'vip-poodle');assert.equal(changed.extras.pet.id,'vip-poodle');assert.equal(changed.extras.bag.id,'bag');
+  const removed=G.equip(changed,'vip-poodle');assert.equal(removed.extras.pet,null);assert.deepEqual(removed.extras.ears,outfit.extras.ears);
+  const legacy=G.clone(outfit);delete legacy.extras.pet;delete legacy.extras.ears;delete legacy.extras.wrist;
+  const restored=G.sanitizeOutfit(legacy);assert.equal(restored.extras.pet,null);assert.equal(restored.extras.neck.id,'heart-necklace');
+});
+
+test('every salon style and hair color can be combined and restored', () => {
+  for(const item of G.ITEMS.filter(i=>i.category==='hair'))for(const color of G.HAIR_COLORS){
+    const outfit=G.recolor(G.equip(G.defaultOutfit(),item.id),item.id,color.hex);
+    assert.equal(outfit.hair,item.id);assert.equal(outfit.hairColor,color.hex);assert.deepEqual(G.sanitizeOutfit(outfit),outfit);
+  }
 });

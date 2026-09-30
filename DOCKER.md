@@ -45,6 +45,15 @@ docker compose build --pull
 docker compose up -d
 ```
 
+If your deployment is a GitHub checkout, first publish the updated source and rebuilt `scene3d.js` to your repository. Then, in the existing checkout on the Docker server:
+
+```sh
+git pull --ff-only
+docker compose up -d --build
+```
+
+Version 4 includes the fully stocked mall, VIP and Halloween collections, expanded salon, jewelry, held pets, model poses, friendly shopper conversations, and runway audience. All 115 items are on physical racks and shelves. The Compose ports and tunnel destination stay the same. Reload the game after the container update; saved outfits and lookbooks remain in the same browser storage.
+
 Stop and remove this deployment's container and network:
 
 ```sh

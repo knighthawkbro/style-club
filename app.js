@@ -8,6 +8,7 @@
   let toastTimeout, storageWarning = false, confirmCallback, runwayDraft;
   let boutique = null, runway3d = null;
   let dragState = null, cardPointer = null, suppressClickUntil = 0, friends = true;
+  let collection = '', extraFilter = 'all';
   const portraitCache = new Map();
   let timer = { mode: 'free', status: 'ready', remaining: 180000, deadline: null, interval: null };
 
@@ -51,10 +52,16 @@
   }
   function injectIcons(scope = document) { scope.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = A.icon(el.dataset.icon); }); }
   function theme() { return G.THEMES.find(t => t.id === themeId); }
+  function inCollection(item) { return (item.collection || '') === collection || (item.id==='fresh-face'&&collection); }
+  function availableCategories() { return G.CATEGORIES.filter(cat=>G.ITEMS.some(item=>item.category===cat.id&&inCollection(item))); }
+  function currentItems() {
+    return G.ITEMS.filter(item=>item.category===category&&inCollection(item)&&(category!=='extras'||extraFilter==='all'||(extraFilter==='pets'?item.slot==='pet':['neck','ears','wrist'].includes(item.slot)))).sort((a,b)=>Number(!!b.fresh)-Number(!!a.fresh));
+  }
   function activePiece() {
     const preferred = G.byId[selectedId];
-    if (preferred?.category === category && G.selection(outfit, preferred)) return preferred;
-    return G.ITEMS.find(item => item.category === category && G.selection(outfit, item));
+    const items=currentItems();
+    if (preferred&&items.includes(preferred)&&G.selection(outfit, preferred)) return preferred;
+    return items.find(item => G.selection(outfit, item));
   }
   function pieceColor(item) {
     if (item.category === 'hair') return outfit.hairColor;
@@ -86,16 +93,21 @@
     const grid = $('#wardrobe-grid'), scroll = resetScroll ? 0 : grid.scrollTop;
     const focusItem = document.activeElement?.dataset.item;
     const focusColor = document.activeElement?.dataset.color;
-    $('#category-tabs').innerHTML = G.CATEGORIES.map(cat => `<button class="category-tab ${category === cat.id ? 'active' : ''}" role="tab" aria-selected="${category === cat.id}" tabindex="${category === cat.id ? 0 : -1}" aria-controls="wardrobe-grid" id="tab-${cat.id}" data-category="${cat.id}">${A.icon(cat.icon)}<span>${A.esc(cat.label)}</span></button>`).join('');
-    const items = G.ITEMS.filter(item => item.category === category).sort((a,b)=>Number(!!b.fresh)-Number(!!a.fresh));
+    const categories=availableCategories();if(!categories.some(cat=>cat.id===category))category=categories[0].id;
+    $('#category-tabs').style.setProperty('--categories',categories.length);
+    $('#category-tabs').innerHTML = categories.map(cat => `<button class="category-tab ${category === cat.id ? 'active' : ''}" role="tab" aria-selected="${category === cat.id}" tabindex="${category === cat.id ? 0 : -1}" aria-controls="wardrobe-grid" id="tab-${cat.id}" data-category="${cat.id}">${A.icon(cat.icon)}<span>${A.esc(cat.label)}</span></button>`).join('');
+    document.querySelectorAll('[data-collection]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.collection===collection)));
+    $('#extras-filter').hidden=category!=='extras';
+    document.querySelectorAll('[data-extra-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.extraFilter===extraFilter)));
+    const items = currentItems();
     $('#item-count').textContent = `${items.length} ${['hair','makeup'].includes(category) ? 'styles' : 'pieces'}`;
-    $('#wardrobe-tip').textContent = category==='makeup'?'Face paint, cheek color, and smiles. Fresh face washes it off.':'Drag a piece onto your character, or tap to wear.';
+    $('#wardrobe-tip').textContent = category==='makeup'?'Face paint, cheek color, and smiles. Fresh face washes it off.':category==='extras'?'Tap a worn extra to take it off. Jewelry, a bag, and a pet can go together.':collection==='vip'?'Your VIP invitation: everything here is yours to wear.':'Drag a piece onto your character, or tap to wear.';
     grid.setAttribute('aria-label', G.CATEGORIES.find(cat => cat.id === category).label);
     grid.setAttribute('aria-labelledby', `tab-${category}`);
     grid.innerHTML = items.map(item => {
       const selected = G.selection(outfit, item), color = category === 'hair' ? outfit.hairColor : pieceColor(item);
       return `<button class="item-card ${selected ? 'selected' : ''}" data-item="${item.id}" draggable="false" title="Drag ${A.esc(item.name)} onto your character, or click to ${selected&&item.category==='extras'?'remove':'wear'}" aria-pressed="${selected}" aria-label="${A.esc(item.name)}${selected ? ', wearing' : ''}"><div class="item-art">${A.thumbnail(item, color)}${selected ? `<span class="selected-tick">${A.icon('check')}</span>` : ''}${item.fresh?'<span class="new-piece">NEW</span>':''}<span class="color-dot" style="background:${color}"></span></div><span class="item-label"><span class="item-name">${A.esc(item.name)}</span><span class="item-detail">${A.esc(item.detail)}</span></span></button>`;
-    }).join('');
+    }).join('') || '<p class="empty-collection">Try All extras to see what’s in this boutique.</p>';
     grid.scrollTop = scroll;
     const active = activePiece(), colors = category === 'hair' ? G.HAIR_COLORS : G.COLORS;
     const color = active ? pieceColor(active) : null;
@@ -115,7 +127,7 @@
     renderAvatar(); renderWardrobe(); persist(); chime();
   }
   function chooseCategory(id, focus = false) {
-    category = id; selectedId = null; renderWardrobe(true);
+    category = id; selectedId = null; extraFilter='all'; renderWardrobe(true);
     if(id==='makeup')boutique?.setView('face');
     if (focus) $(`#tab-${id}`).focus();
   }
@@ -293,7 +305,7 @@
     dragState=null;suppressClickUntil=performance.now()+400;boutique.setDressDrag(false);
     $('#drag-preview').hidden=true;$('#character-drop-target').hidden=true;document.body.classList.remove('dressing-drag');
     boutique.canvas.dataset.lastDrop=accepted?id:'canceled';
-    if(accepted){selectedId=id;category=G.byId[id].category;changeOutfit(G.wear(outfit,id));if(category==='makeup')boutique.setView('face');toast(`${G.byId[id].name} — looking lovely!`);}
+    if(accepted){selectedId=id;category=G.byId[id].category;collection=G.byId[id].collection||'';extraFilter='all';changeOutfit(G.wear(outfit,id));if(category==='makeup')boutique.setView('face');toast(`${G.byId[id].name} — looking lovely!`);}
     else if(!canceled)toast('Drop the piece over your character to wear it.');
   }
   document.addEventListener('pointerdown',event=>{
@@ -331,6 +343,9 @@
     if (data.view) switchView(data.view);
     else if (data.mode) chooseMode(data.mode);
     else if (data.category) chooseCategory(data.category, true);
+    else if (data.collection !== undefined) {collection=data.collection;extraFilter='all';selectedId=null;renderWardrobe(true);}
+    else if (data.extraFilter) {extraFilter=data.extraFilter;selectedId=null;renderWardrobe(true);}
+    else if (data.visit) {closeDialog($('#mall-dialog'));boutique?.visit(data.visit);toast(`Let’s walk to ${window.Style3D.STATIONS.find(s=>s.id===data.visit).name}.`);}
     else if (data.item) { selectedId = data.item; changeOutfit(G.equip(outfit, data.item)); }
     else if (data.color) { const item = activePiece(); if (item) { selectedId = item.id; changeOutfit(G.recolor(outfit, item.id, data.color)); } }
     else if (data.skin) { const next = G.clone(outfit); next.skin = data.skin; changeOutfit(next); $(`[data-skin="${data.skin}"]`).focus({ preventScroll: true }); }
@@ -368,13 +383,13 @@
     dialog.addEventListener('close', () => { if (dialog.id === 'confirm-dialog') confirmCallback = null; if (dialog.id === 'runway-dialog') runway3d?.hide(); });
   });
   $('#category-tabs').addEventListener('keydown', event => {
-    const index = G.CATEGORIES.findIndex(c => c.id === category);
+    const categories=availableCategories(),index = categories.findIndex(c => c.id === category);
     let next;
-    if (event.key === 'ArrowRight') next = (index + 1) % G.CATEGORIES.length;
-    else if (event.key === 'ArrowLeft') next = (index - 1 + G.CATEGORIES.length) % G.CATEGORIES.length;
+    if (event.key === 'ArrowRight') next = (index + 1) % categories.length;
+    else if (event.key === 'ArrowLeft') next = (index - 1 + categories.length) % categories.length;
     else if (event.key === 'Home') next = 0;
-    else if (event.key === 'End') next = G.CATEGORIES.length - 1;
-    if (next !== undefined) { event.preventDefault(); chooseCategory(G.CATEGORIES[next].id, true); }
+    else if (event.key === 'End') next = categories.length - 1;
+    if (next !== undefined) { event.preventDefault(); chooseCategory(categories[next].id, true); }
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseTimer(); });
   window.addEventListener('pagehide', () => { pauseTimer(); persist(); });
@@ -389,31 +404,40 @@
         catalog: G.byId,game:G,
         onGrab(id,event){beginDrag(id,event,true);},onDrag:moveDrag,onDrop:endDrag,
         onHover(id){const hint=$('#rack-hover');hint.hidden=!id||!!dragState;if(id)hint.textContent=`Drag ${G.byId[id].name} onto your character`;},
-        onRackPage(page,pages){toast(`New choices on the rack · ${page} of ${pages}`);},
-        onStation(station) {
+        onStation(station,{browse=false}={}) {
           if (station.id === 'runway') { showRunway(); return; }
-          chooseCategory(station.id);
-          toast(`${station.name} — pick something you love in the dressing room.`);
-          if (window.innerWidth <= 700) $('#wardrobe').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          collection=station.collection||'';chooseCategory(station.category);
+          toast(browse?`${station.name} — pick something you love in the dressing room.`:`${station.name} — drag a piece from a display onto yourself!`);
+          if (browse&&window.innerWidth <= 700) $('#wardrobe').scrollIntoView({ behavior: 'smooth', block: 'start' });
         },
         onNearby(station) {
           $('#nearby-button').hidden = !station;
-          $('#rack-next-button').hidden = !station||station.id==='runway';
           $('#nearby-label').textContent = station?.id === 'runway' ? 'Walk the runway' : `Try ${station?.name.toLowerCase() || 'a rack'}`;
         },
+        onLocation(store){$('#mall-location').textContent=store?.name||'The promenade';},
+        onFriend(name){$('#friend-actions').hidden=!name;$('#greet-button').textContent=name?`Say hi to ${name}`:'Say hi';},
+        onBubble(speech){const bubble=$('#friend-bubble');bubble.hidden=!speech;if(!speech)return;
+          const key=speech.name+speech.text;if(bubble.dataset.message!==key){bubble.dataset.message=key;bubble.innerHTML=`<strong>${A.esc(speech.name)}</strong><span>${A.esc(speech.text)}</span>`;}
+          bubble.style.left=`${speech.left}%`;bubble.style.top=`${speech.top}%`;
+        },
+        onTogether(style){pose=style;runwayDraft=null;renderPoses();toast('A little fashion moment with your friend!');},
         onView(mode) {
           for (const [id, value] of [['explore-button','walk'],['outfit-view-button','fit'],['face-view-button','face']]) {
             $(`#${id}`).classList.toggle('active', mode === value); $(`#${id}`).setAttribute('aria-pressed', String(mode === value));
           }
-          $('#world-hint').textContent = mode === 'walk' ? 'Drag clothes onto yourself · click the floor to walk' : mode==='face'?'Choose makeup · drag to turn your face':'Drag to turn · see your outfit from every side';
+          $('#world-hint').textContent = mode === 'walk' ? 'Pick a shop on the map · drag clothes onto yourself' : mode==='face'?'Choose makeup · drag to turn your face':'Drag to turn · your pose returns after walking';
           $('#scene').classList.toggle('fitting-view', mode !== 'walk');$('#rack-hover').hidden=true;
         }
       });
       $('#explore-button').addEventListener('click', () => { boutique.setView('walk'); boutique.canvas.focus({ preventScroll: true }); });
       $('#outfit-view-button').addEventListener('click', () => boutique.setView('fit'));
       $('#face-view-button').addEventListener('click', () => boutique.setView('face'));
-      $('#rack-next-button').addEventListener('click', () => boutique.cycleRack());
-      $('#friends-button').addEventListener('click', () => {friends=!friends;boutique.setFriends(friends);$('#friends-button').setAttribute('aria-pressed',String(friends));$('#friends-button span').textContent=friends?'3 boutique friends':'A quiet boutique';});
+      $('#friends-button').addEventListener('click', () => {friends=!friends;boutique.setFriends(friends);$('#friends-button').setAttribute('aria-pressed',String(friends));$('#friends-button span').textContent=friends?'3 mall friends':'A quiet mall';});
+      const storeOrder=['dresses','shoes','makeup','hair','tops','bottoms','halloween','vip'];
+      $('#mall-stores').innerHTML=storeOrder.map(id=>{const store=window.Style3D.STORES.find(s=>s.id===id);return `<button class="mall-store" data-visit="${store.id}" style="--store-color:${store.color}"><span aria-hidden="true">${store.collection==='vip'?'♛':store.collection==='halloween'?'☾':A.icon(G.CATEGORIES.find(c=>c.id===store.id)?.icon||'sparkles')}</span><strong>${A.esc(store.name)}</strong><small>${A.esc(store.detail)}</small></button>`;}).join('');
+      $('#mall-map-button').addEventListener('click',()=>openDialog('#mall-dialog'));
+      $('#greet-button').addEventListener('click',()=>boutique.greet());
+      $('#together-button').addEventListener('click',()=>boutique.poseTogether());
       $('#turn-left-button').addEventListener('click', () => boutique.turn(-Math.PI / 4));
       $('#turn-right-button').addEventListener('click', () => boutique.turn(Math.PI / 4));
       $('#front-view-button').addEventListener('click', () => boutique.resetCamera());

@@ -25,7 +25,7 @@
   }
   function garment(item, color, prefix) {
     const c = color || item.color, dark = mix(c,-.22), light = mix(c,.42), fill = `url(#${prefix})`;
-    const bases={rainbow:'cloud',cosmic:'gown',butterfly:'meadow',cupcake:'cloud',bomber:'hoodie',denim:'sweater',stripes:'tee',varsity:'sweater',cargo:'trousers',flare:'trousers','star-skirt':'pleated',laceboot:'boot',hightop:'sneaker'};
+    const bases={rainbow:'cloud',cosmic:'gown',butterfly:'meadow',cupcake:'cloud',bomber:'hoodie',denim:'sweater',stripes:'tee',varsity:'sweater',cargo:'trousers',flare:'trousers','star-skirt':'pleated',laceboot:'boot',hightop:'sneaker',velvet:'gown',pearl:'gown',aurora:'gown',diamond:'petal',tweed:'denim',tuxedo:'blouse',palazzo:'flare',sequin:'star-skirt',pearlshoe:'maryjane',diamondboot:'starboot',royalcrown:'tiara',quiltedbag:'bag',starcape:'cape',witch:'gown',pumpkin:'petal',ghost:'cloud',vampire:'gown',skeleton:item.category==='tops'?'sweater':'trousers',pumpkinhat:'beret',pumpkinbag:'bag',stripeboot:'boot',cherry:'meadow',plaid:'bow',raincoat:'bomber',sport:'tee',ribbonshoe:'maryjane'};
     if(bases[item.shape]) {
       let art=garment({...item,shape:bases[item.shape]},c,prefix);
       if(item.shape==='rainbow') ['#bda5d8','#8eafd1','#83bfb7','#edcc82',c].forEach((tint,i)=>{const y=299-i*18;art+=path(`M${69+i*5} ${y}Q120 ${y+18} ${171-i*5} ${y}`,'none',tint,14);});
@@ -40,6 +40,26 @@
       if(item.shape==='flare')art+=path('M84 331L74 406h38l2-75 M126 331l2 75h38l-11-75',fill,dark,1);
       if(item.shape==='star-skirt')for(const[x,y]of[[98,245],[132,255],[113,285],[153,286]])art+=star(x,y,6);
       if(item.shape==='laceboot')for(const side of[0,44])for(const y of[375,387,399])art+=path(`M${88+side} ${y}l12 7m-12 0 12-7`,'none',light,1.5);
+      if(['velvet','pearl','diamond','aurora'].includes(item.shape)){
+        for(const[x,y]of[[104,179],[137,191],[100,261],[143,282],[91,330],[126,359],[162,372]])art+=item.shape==='pearl'?circle(x,y,3,'#fff6e7'):star(x,y,5,'#fff3d8');
+        if(item.shape==='aurora')for(const[y,tint]of[[299,'#8eafd1'],[333,'#bda5d8'],[368,'#db91a5']])art+=path(`M${90-(y-290)*.42} ${y}Q120 ${y+22} ${150+(y-290)*.42} ${y}`,'none',tint,15);
+      }
+      if(['tweed','plaid'].includes(item.shape)){for(const x of[106,120,134])art+=path(`M${x} 159v47`,'none',light,2);for(const y of[173,187,201])art+=path(`M99 ${y}h43`,'none',light,2);if(item.shape==='plaid')for(const y of[238,261,284])art+=path(`M${96-(y-215)*.25} ${y}H${144+(y-215)*.25}`,'none',light,5);}
+      if(item.shape==='tuxedo')art+=path('M99 155L116 197L105 177L100 176Z M141 155L124 197L135 177L140 176Z',light)+bow(120,159,.25,'#d8c4a2');
+      if(item.shape==='skeleton'){
+        if(item.category==='tops'){art+=path('M120 166v39','none','#f3e8d8',4);for(const y of[176,188,200])art+=path(`M103 ${y-3}Q120 ${y+6} 137 ${y-3}`,'none','#f3e8d8',4);}
+        else for(const x of[98,142])for(const y of[245,326])art+=path(`M${x} ${y}v57`,'none','#f3e8d8',8)+circle(x,y,6,'#f3e8d8')+circle(x,y+57,6,'#f3e8d8');
+      }
+      if(['pumpkin','ghost'].includes(item.shape)){for(const x of[111,131])art+=ellipse(x,181,4,7,'#594551');art+=path('M111 196Q121 204 131 196','none','#594551',3);}
+      if(item.shape==='witch')for(const y of[166,179,192])art+=path(`M111 ${y}l18 10m-18 0 18-10`,'none','#e8c66f',2);
+      if(item.shape==='vampire')art+=path('M102 154L82 130L86 163L106 171 M138 154L158 130L154 163L134 171',dark);
+      if(item.shape==='cherry')for(const[x,y]of[[106,177],[101,245],[137,268],[107,294]])art+=circle(x-3,y,4,'#b05b69')+circle(x+4,y+1,4,'#b05b69')+path(`M${x-3} ${y-3}l5-9 2 10`,'none','#78956a',1.5);
+      if(item.shape==='pumpkinhat')art+=path('M121 27q-7-12 5-17','none','#76945b',6)+ellipse(131,25,11,4,'#809e65');
+      if(item.shape==='pumpkinbag')art+=ellipse(179,254,3,4,'#594551')+ellipse(196,254,3,4,'#594551')+path('M177 269q10 9 20 0','none','#594551',3);
+      if(item.shape==='quiltedbag')for(const y of[249,261,273])art+=path(`M171 ${y}l25-10m-25 0 25 10`,'none',light,1);
+      if(item.shape==='pearlshoe')for(const x of[88,96,137,145])art+=circle(x,416,3,'#fff8e9');
+      if(item.shape==='ribbonshoe')art+=bow(92,417,.24,light)+bow(148,417,.24,light);
+      if(item.shape==='stripeboot')for(const x of[84,132])for(const y of[375,388,401])art+=path(`M${x} ${y}h22`,'none',light,5);
       return art;
     }
     let s = material(c,prefix);
@@ -117,6 +137,29 @@
       }
     }
     if(item.category==='extras') {
+      if(item.slot==='pet'){
+        s+=ellipse(79,224,27,33,fill)+ellipse(79,188,27,24,fill);
+        if(item.shape==='petrabbit')s+=ellipse(64,155,8,24,c)+ellipse(90,155,8,24,c)+ellipse(64,155,3,18,light)+ellipse(90,155,3,18,light);
+        else if(['petcat','petroyalcat'].includes(item.shape))s+=path('M55 178L54 151L72 167 M86 167L105 151L103 179',fill,dark,1);
+        else s+=ellipse(54,185,10,20,c)+ellipse(104,185,10,20,c);
+        for(const x of[68,90])s+=ellipse(x,188,3,4,'#493844')+circle(x+1,187,1,'#fff7ed');
+        s+=ellipse(79,200,9,6,light)+ellipse(79,197,4,3,'#594555')+ellipse(58,237,10,12,c)+ellipse(99,237,10,12,c)+bow(99,173,.28,'#d8a0b7');
+        if(item.shape==='petpoodle')for(const[x,y]of[[55,164],[68,161],[81,160],[95,164],[52,190],[107,190]])s+=circle(x,y,8,light);
+        if(item.shape==='petroyalcat')s+=path('M67 166L65 149L76 156L81 144L88 156L98 149L94 166Z','#e5c56e');
+      }
+      if(['heartnecklace','gemnecklace'].includes(item.shape)){
+        s+=path('M98 145Q102 173 120 174Q138 173 142 145','none','#cfad65',2);
+        s+=item.shape==='gemnecklace'?path('M120 170l7 8-7 11-7-11Z',c,dark,1):path('M120 186Q104 176 112 172Q118 169 120 175Q123 169 129 173Q136 179 120 186Z',c,dark,.8);
+      }
+      if(['flowerearrings','diamondearrings'].includes(item.shape))for(const x of[79,161])s+=circle(x,103,3,'#dfbf70')+(item.shape==='flowerearrings'?flower(x,117,8,c):path(`M${x} 108l6 9-6 11-6-11Z`,c,dark,1));
+      if(['bracelet','pearlbracelet'].includes(item.shape)){s+=path('M180 239q10 5 16-1','none','#d8b567',4);for(let i=0;i<6;i++)s+=circle(181+i*2.5,240+Math.sin(i/5*Math.PI)*2,2.3,item.shape==='pearlbracelet'?'#fff6e3':c);s+=star(183,248,4,c);}
+      if(['witchhat','wizardhat','sunhat'].includes(item.shape)){
+        s+=ellipse(120,58,63,15,fill,`stroke="${dark}"`);
+        s+=path(item.shape==='sunhat'?'M88 54L91 24Q120 16 149 24L153 55Z':'M87 53L120-16L154 53Z',fill,dark,1);
+        s+=path('M91 48Q120 57 149 48','none','#e7c17d',6);
+        if(item.shape==='wizardhat')s+=star(122,13,6)+star(109,36,5);else s+=bow(143,50,.35,light);
+      }
+      if(item.shape==='batwings')s+=path('M112 178Q81 109 23 136L38 183Q67 157 66 208Q97 185 100 231L115 206 M128 178Q159 109 217 136L202 183Q173 157 174 208Q143 185 140 231L125 206',fill,dark,2);
       if(item.shape==='hairbow')s+=bow(143,48,.9,c);
       if(item.shape==='crown') {s+=path('M79 62Q120 31 162 62','none','#79936c',5);for(const[x,y,r]of[[85,55,10],[104,46,11],[124,44,10],[145,48,11],[159,58,8]])s+=flower(x,y,r,c);}
       if(item.shape==='beret') {s+=path('M76 61Q55 45 82 31Q127 11 164 34Q186 55 156 61Q118 47 76 61Z',fill,dark,1);s+=path('M119 26L116 17','none',dark,5);s+=path('M81 60Q120 48 157 60','none',dark,5);}
@@ -135,12 +178,14 @@
   }
   function facePaint(style,color) {
     let s='';
-    if(['rosy','sunset','stardust'].includes(style)) {
+    if(['rosy','sunset','stardust','diamond'].includes(style)) {
       s+=ellipse(96,106,10,5,color,'opacity=".65"')+ellipse(144,106,10,5,color,'opacity=".65"');
       s+=path('M113 118Q120 123 127 117','none',color,3);
       if(style!=='rosy')s+=path('M96 81Q105 75 113 81 M129 81Q138 75 145 81','none',color,4);
     }
     if(style==='stardust')s+=star(95,105,6,'#e6bb65')+star(145,105,6,'#e6bb65');
+    if(style==='diamond')for(const x of[93,146])s+=star(x,105,6,'#fff8e9')+circle(x+4,110,2,color);
+    if(style==='ghost')for(const x of[94,145])s+=path(`M${x-7} 113v-8a7 7 0 0 1 14 0v8l-4-2-3 2-3-2Z`,'#fff7e7')+circle(x-2,105,1,'#544451')+circle(x+2,105,1,'#544451');
     if(style==='freckles')for(const side of[0,47])for(const[x,y]of[[90,103],[98,102],[105,105],[96,110]])s+=circle(x+side,y,1.3,'#a36c4d');
     if(style==='rainbow')for(const side of[0,45])['#db91a5','#edcc82',color].forEach((t,i)=>s+=path(`M${88+side+i*2} 108Q${98+side} ${89+i*5} ${108+side-i*2} 108`,'none',t,2));
     if(style==='butterfly')for(const side of[0,58])s+=ellipse(88+side,85,7,10,color)+ellipse(91+side,98,5,6,mix(color,.35));
@@ -150,6 +195,12 @@
   function hairBack(shape,c,prefix) {
     const fill=`url(#${prefix})`, dark=mix(c,-.23);
     let s=material(c,prefix);
+    if(shape==='straight')return s+path('M72 83Q68 25 120 25Q173 25 168 87L177 219Q148 230 142 218L142 131H98L98 220Q69 230 62 218Z',fill,dark,1)+path('M79 88l-5 126 M160 88l5 126','none',mix(c,.25),2);
+    if(shape==='pixie')return s+ellipse(120,76,47,51,fill);
+    if(shape==='topknot')return s+ellipse(120,25,27,24,fill)+ellipse(120,81,47,59,fill)+bow(144,35,.35,'#dbabc1');
+    if(shape==='twintails')return s+path('M82 53Q36 44 45 126L49 197Q74 214 81 195L66 106L85 69 M158 53Q204 44 195 126L191 197Q166 214 159 195L174 106L155 69',fill,dark,1)+ellipse(120,83,47,58,fill)+bow(74,66,.35,'#e3b3c8')+bow(166,66,.35,'#e3b3c8');
+    if(shape==='puffs'){for(const side of[-1,1]){s+=circle(120+side*52,45,26,c);for(let i=0;i<9;i++)s+=circle(120+side*52+Math.sin(i)*23,45+Math.cos(i)*23,9,c);}return s+ellipse(120,83,47,58,fill);}
+    if(shape==='sidebraid'){s+=ellipse(120,83,47,58,fill);for(let y=108;y<219;y+=14)s+=ellipse(166-(y-108)*.24,y,13,10,fill);return s+bow(139,223,.35,'#dcabc2');}
     if(shape==='curls') {
       s+=ellipse(120,97,63,74,fill);
       for(const[x,y,r]of[[78,48,22],[101,33,21],[129,30,23],[155,44,25],[175,69,22],[179,98,20],[169,126,25],[154,149,21],[80,146,24],[64,115,23],[63,79,20]])s+=circle(x,y,r,c);
@@ -169,6 +220,7 @@
     const light=mix(c,.2);
     let s=path('M78 84Q72 41 106 34Q148 17 164 57L163 90Q151 78 145 52Q123 77 82 74L81 98Z',c,mix(c,-.14),1);
     if(shape==='bob')s=path('M78 92Q67 40 110 32Q155 22 166 65L161 103Q150 84 143 56Q122 77 85 72L83 99Z',c,mix(c,-.14),1);
+    if(shape==='pixie')s=path('M76 78Q66 37 111 29Q157 24 165 64L158 85L149 61Q124 93 81 76L80 103Z',c,mix(c,-.14),1);
     if(shape==='curls') {s='';for(const[x,y,r]of[[82,65,16],[95,48,18],[118,41,18],[140,46,20],[158,59,17],[162,80,11]])s+=circle(x,y,r,c);s+=path('M88 43Q98 32 112 39 M135 33Q151 33 157 49','none',light,2);}
     else s+=path('M86 62Q107 36 135 39 M92 65Q118 50 138 43 M151 46Q160 64 159 78','none',light,1.6,'opacity=".6"');
     return s;
@@ -206,6 +258,7 @@
     s+=shape(outfit.extras.neck,'neck');
     s+=shape(outfit.extras.head,'head');
     s+=shape(outfit.extras.bag,'bag');
+    s+=shape(outfit.extras.ears,'ears');s+=shape(outfit.extras.wrist,'wrist');s+=shape(outfit.extras.pet,'pet');
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 450" fill="none" role="img" aria-label="${esc(options.label||'Your styled character')}" class="doll-svg"><title>${esc(options.label||'Your styled character')}</title>${s}</svg>`;
   }
   function thumbnail(item, color) {
@@ -218,12 +271,16 @@
       for(const x of[104,137])s+=ellipse(x,89,8,10,'#fffaf5')+ellipse(x,90,4,7,'#574038')+circle(x+2,87,1.7,'#fff')+path(`M${x-8} 79Q${x} 75 ${x+7} 79`,'none','#754e3a',2);
       s+=path('M113 117Q120 124 128 116','none','#a55969',2)+facePaint(item.shape,color||item.color);
     }else s=garment(item,color,prefix);
-    if(item.category==='dresses'&&!['gown','cosmic'].includes(item.shape))view='42 135 155 193';
-    if(item.category==='bottoms'&&!['jeans','trousers','cargo','flare'].includes(item.shape))view='53 204 137 110';
+    if(item.category==='dresses'&&!['gown','cosmic','velvet','pearl','aurora','witch','vampire'].includes(item.shape))view='42 135 155 193';
+    if(item.category==='bottoms'&&!['jeans','trousers','cargo','flare','palazzo','skeleton'].includes(item.shape))view='53 204 137 110';
     if(item.slot==='bag')view='147 204 82 91';
-    if(item.slot==='neck')view='88 131 65 55';
+    if(item.slot==='neck')view='88 131 65 62';
+    if(item.slot==='ears')view='59 88 122 48';
+    if(item.slot==='wrist')view='173 225 29 32';
+    if(item.slot==='pet')view='42 126 75 135';
+    if(['witchhat','wizardhat','sunhat'].includes(item.shape))view='44 -22 154 104';
     if(item.slot==='back')view='4 106 232 155';
-    if(item.shape==='cape')view='32 128 177 193';
+    if(['cape','starcape'].includes(item.shape))view='32 128 177 193';
     if(item.shape==='headphones')view='50 5 142 107';
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${view}" fill="none" aria-hidden="true">${s}</svg>`;
   }

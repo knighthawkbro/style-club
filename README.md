@@ -1,6 +1,6 @@
 # Style Club
 
-An original, single-player 3D dress-up game for ages 6–9. Explore a pastel boutique, discover clothes on the racks, customize a fitted 3D character, and walk the runway. No Roblox account, installation, or network connection is needed to play the included build.
+An original, single-player 3D dress-up game for ages 6–9. Explore a compact, single-floor fashion mall, discover clothes on the racks, customize a fitted 3D character, and walk the runway. No Roblox account, installation, or network connection is needed to play the included build.
 
 ## Play
 
@@ -16,40 +16,40 @@ Pick clothes and colors, customize hair and skin tone, and take the outfit to th
 
 - Click or tap the floor to walk. Click a rack to walk over and open its clothes. Routes go around furniture.
 - Use the mouse to **drag a garment straight off a 3D rack onto your character**. A highlighted target shows where to drop it. You can also drag dressing-room cards. Dropping elsewhere cancels; Escape cancels a held piece. Clicking and tapping still work.
-- Near a station, **More on this rack** brings out another set of items.
+- **All 115 pieces are out in the shops**. Walk around the wall racks and two-level shelves to discover them. Displays show the actual garment, hairstyle, pet, or accessory you will wear; nothing needs a rack page or a menu to appear.
 - Click the room, then use **WASD** or **arrow keys** to move. On-screen arrows also work with a mouse or touch.
 - **Drag** the room to turn the camera. Press **E**, or the nearby-rack button, to try the closest station.
 - **Outfit view** brings the camera close. Drag or use the turn buttons to inspect the front, sides, and back. **Explore** returns to walking.
-- Visit dresses, tops, bottoms, shoes, accessories, or the hair counter. You can also use the dressing-room tabs at any time.
-- Walk to the runway, or use **Ready for the runway**, to watch the character walk and pose.
-- **Makeup** opens a close-up view with eight choices, including Fresh face to wash it off. Choose a paint color or use Face view whenever you like.
-- **Strike a pose** opens eight named poses. Your chosen pose is used on the runway and saved with its picture.
+- Open **Mall map** to walk to a boutique, or explore freely. Petal & Thread has dresses; Sunday Studio has tops; Mix & Match has bottoms; Sole Mates has shoes; GLOW beauty has makeup; Charm & Co. has hair, jewelry, accessories, and pets. BOO-tique has Halloween costumes, and The Velvet Lounge has the free VIP collection. You can also use the dressing-room tabs at any time.
+- Walk to the runway, or use **Ready for the runway**, to watch the character strut and pose while twelve guests clap and cheer.
+- **Makeup** opens a close-up view with eleven choices, including Fresh face to wash it off. Choose a paint color or use Face view whenever you like.
+- **Strike a pose** opens sixteen named poses, including Runway classic, Cover star, Over the shoulder, Cross step, and Frame the face. Walking temporarily animates the legs and returns to the selected pose when you stop. Your pose is used on the runway and saved with its picture.
 - **Full screen** expands the whole game, including its wardrobe. Use **Exit full screen** or Escape to return. Browsers that cannot enter native fullscreen still expand the game to fill their window.
-- Poppy, Nova, and Jules wander between stations, try different clothes, and pose. They are local computer-controlled shoppers. The **3 boutique friends** button switches to a quiet room.
+- Poppy, Nova, and Jules wander between shops, try clothes, and give friendly compliments in speech bubbles. They notice a new outfit, hair color, hairstyle, makeup, jewelry, or pet. Click a nearby friend, press **F**, or choose **Say hi**. **Pose together** makes a matching pose. The **3 mall friends** button switches to a quiet room.
 
 ## Included
 
-- 50 clothing and accessory pieces, six hairstyles, six skin tones, 12 clothing colors, and eight hair colors.
-- 16 new pieces: rainbow and butterfly dresses, a galaxy gown, layered ruffles, jackets, striped tees, cargo pants, flares, a star skirt, lace-up boots, high tops, cat ears, headphones, and a superhero cape.
-- Eight makeup and face-paint choices, eight poses, three autonomous shoppers, rack dragging, and fullscreen controls.
-- A walkable 3D boutique with furniture collision, click-to-walk routes, third-person camera controls, and interactive racks.
+- 92 clothing and accessory pieces, 12 hairstyles, six skin tones, 14 clothing colors, and 18 hair colors.
+- 19 VIP pieces and 14 Halloween choices: pearl and velvet gowns, exclusive jewelry, costumes, hats, boots, wings, and face paint. Every item is available without a purchase.
+- Eleven makeup and face-paint choices, sixteen poses, three autonomous shoppers, rack dragging, and fullscreen controls.
+- Eight nearby boutiques around a tiled mall promenade, with a fountain, benches, shop windows, a directory, furniture collision, smooth click-to-walk routes, and interactive racks.
 - Complete garments around the body, joint-attached sleeves and trousers, hidden covered skin, and 360-degree outfit inspection.
 - Six themes: Garden Party, Fairy Tale, Cozy Sunday, Starlight Soirée, Hello Sunshine, and Little Explorer.
 - Free play and an optional three-minute challenge with start, pause, and resume.
-- Outfit layering, accessory removal, undo, random outfits, and poses.
+- Five pets to hold: a bow kitten, bandana puppy, bunny, VIP poodle, and royal kitten. Earrings, bracelets, necklaces, bags, hats, wings, and pets have separate accessory slots. Tap an equipped extra to remove it; undo and random outfits remain available.
 - A runway reveal with encouraging, deterministic theme and color feedback.
 - A local lookbook for up to 40 outfits, outfit reuse, and picture downloads.
 - Responsive layouts, keyboard controls, labeled buttons, reduced-motion support, and optional synthesized sounds.
 
 ## For parents
 
-There are no accounts, strangers, chat, ads, purchases, trackers, outside fonts, or third-party requests. All wardrobe items are available from the start. Scores are based only on the clothes, accessories, colors, and theme. Skin tone, hairstyle, and makeup do not change scores. The other shoppers are simple local game characters, not real players or online chatbots.
+There are no accounts, strangers, online chat, ads, purchases, trackers, outside fonts, or third-party requests. All wardrobe items are available from the start. Scores are based only on the clothes, accessories, colors, and theme. Skin tone, hairstyle, and makeup do not change scores. The other shoppers use friendly, prewritten comments that run entirely on this device; there is no text entry or connection to an AI service.
 
 The timer pauses when the page becomes hidden, when an in-game dialog opens, or when the child opens the lookbook. It stays paused until explicitly resumed. Closing or refreshing the game resets the timer.
 
 The current outfit and lookbook are stored in this browser on this device. Other browsers, private windows, different local addresses, and opening `index.html` directly may have separate storage. Clearing browser data removes saved looks. Download favorite pictures to keep a durable copy. If storage is blocked or full, the game still works and explains that saving is temporary.
 
-This is an original solo 3D boutique, unaffiliated with Roblox or Dress to Impress. The character, clothes, and room are procedural original artwork. There are no multiplayer servers or copied game assets. The model uses articulated parts and fitted clothing geometry; it does not simulate cloth physics.
+This is an original solo 3D fashion mall, unaffiliated with Roblox or Dress to Impress. The character, clothes, and room are procedural original artwork. There are no multiplayer servers or copied game assets. The model uses articulated parts and fitted clothing geometry; it does not simulate cloth physics.
 
 ## Development
 
@@ -63,10 +63,15 @@ npm test        Run the game rules and artwork tests
 ```
 
 - `game.js`: wardrobe catalog, outfit rules, scoring, randomization, saved-data validation.
-- `src/model3d.mjs`: body geometry, fitted garments, joint hierarchy, faces, hairstyles, and animation poses.
-- `src/scene3d.mjs`: boutique, lighting, camera, controls, rack interaction, runway, and 3D portrait rendering.
+- `src/model3d.mjs`: body geometry, fitted garments, joint hierarchy, faces, hairstyles, pets, and joint animation.
+- `src/scene3d.mjs`: mall scene, lighting, camera, controls, rack interaction, runway, and 3D portrait rendering.
+- `src/mall.mjs`: mall architecture, shop interiors, displays, and camera cutaways.
+- `src/shop-displays.mjs`: physical racks, shelves, item labels, and draggable previews made from the wearable geometry.
+- `src/motion.mjs`: sixteen pose targets and distance-driven steps with planted feet.
+- `src/audience.mjs`: lightweight clapping and cheering runway guests.
 - `src/world-rules.mjs`: movement, collision, station locations, and click-to-walk pathfinding.
 - `src/shoppers.mjs`: autonomous local shopper routes, browsing, outfit changes, and personal space.
+- `src/friend-talk.mjs`: prewritten greetings and comments about styling changes.
 - `art.js`: illustrated wardrobe thumbnails and graphics-unavailable fallback.
 - `app.js`: interactions, local storage, timer, sound, dialogs, and lookbook.
 - `styles.css` and `world.css`: desktop and mobile presentation.

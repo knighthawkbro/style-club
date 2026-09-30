@@ -10,13 +10,19 @@
     { hex: '#edcc82', name: 'Buttercup' }, { hex: '#f0ad88', name: 'Peach fizz' },
     { hex: '#f2e9d8', name: 'Vanilla cloud' }, { hex: '#a95665', name: 'Berry kiss' },
     { hex: '#756689', name: 'Twilight' }, { hex: '#514859', name: 'Midnight' },
-    { hex: '#83bfb7', name: 'Sea glass' }, { hex: '#e4c2ad', name: 'Ballet slipper' }
+    { hex: '#83bfb7', name: 'Sea glass' }, { hex: '#e4c2ad', name: 'Ballet slipper' },
+    { hex: '#ed9854', name: 'Pumpkin glow' }, { hex: '#32313f', name: 'Inky velvet' }
   ];
   const HAIR_COLORS = [
     { hex: '#493027', name: 'Chestnut' }, { hex: '#241e24', name: 'Soft black' },
     { hex: '#8d5136', name: 'Cinnamon' }, { hex: '#bd814a', name: 'Caramel' },
     { hex: '#e0ba76', name: 'Honey blonde' }, { hex: '#eee0ba', name: 'Platinum' },
-    { hex: '#d394a7', name: 'Candy pink' }, { hex: '#a58ebd', name: 'Lavender' }
+    { hex: '#d394a7', name: 'Candy pink' }, { hex: '#a58ebd', name: 'Lavender' },
+    { hex:'#54a99f',name:'Mermaid teal' }, { hex:'#536eb6',name:'Blueberry' },
+    { hex:'#b74058',name:'Cherry red' }, { hex:'#f0ac83',name:'Peach sorbet' },
+    { hex:'#c2cbd6',name:'Moon silver' }, { hex:'#764998',name:'Grape soda' },
+    { hex:'#ef86bd',name:'Bubblegum' }, { hex:'#ce519e',name:'Dragon fruit' },
+    { hex:'#9baa71',name:'Pistachio' }, { hex:'#f1d28d',name:'Golden vanilla' }
   ];
   const SKIN_TONES = [
     { hex: '#f4d7c5', name: 'Porcelain' }, { hex: '#e8b99a', name: 'Peach' },
@@ -33,7 +39,11 @@
     { name: 'Just me', icon: '✧' }, { name: 'Hand on hip', icon: '♡' },
     { name: 'Hello!', icon: '✋' }, { name: 'Superstar', icon: '★' },
     { name: 'Heart hug', icon: '♥' }, { name: 'Happy twirl', icon: '↻' },
-    { name: 'Little curtsy', icon: '✿' }, { name: 'Superhero', icon: '⚡' }
+    { name: 'Little curtsy', icon: '✿' }, { name: 'Superhero', icon: '⚡' },
+    { name: 'Runway classic', icon: '✦' }, { name: 'Cover star', icon: '◇' },
+    { name: 'Over the shoulder', icon: '↶' }, { name: 'Cross step', icon: '×' },
+    { name: 'Frame the face', icon: '♡' }, { name: 'Power pose', icon: '★' },
+    { name: 'Point & pose', icon: '❋' }, { name: 'Grand finale', icon: '✧' }
   ];
   const ITEMS = [
     { id: 'petal', category: 'dresses', name: 'Petal party', detail: 'A little flower power', shape: 'petal', color: '#db91a5', tags: ['floral', 'pastel', 'fancy'] },
@@ -86,6 +96,51 @@
     { id: 'cat-ears', category: 'extras', slot: 'head', name: 'Kitten club', detail: 'A purr-fect little headband', shape: 'catears', color: '#e4c2ad', tags: ['cute', 'cozy', 'dreamy'], fresh: true },
     { id: 'headphones', category: 'extras', slot: 'head', name: 'My own beat', detail: 'Dance to your own tune', shape: 'headphones', color: '#bda5d8', tags: ['sporty', 'bright', 'casual'], fresh: true },
     { id: 'hero-cape', category: 'extras', slot: 'back', name: 'Everyday hero', detail: 'Kindness is a superpower', shape: 'cape', color: '#db91a5', tags: ['adventure', 'dreamy', 'bright'], fresh: true },
+    { id:'velvet-gown',category:'dresses',name:'Velvet spotlight',detail:'A sweeping velvet gown',shape:'velvet',color:'#a95665',tags:['fancy','sparkle'],collection:'vip',fresh:true },
+    { id:'pearl-gown',category:'dresses',name:'Pearl premiere',detail:'Pearls from collar to hem',shape:'pearl',color:'#f2e9d8',tags:['fancy','dreamy'],collection:'vip',fresh:true },
+    { id:'aurora-gown',category:'dresses',name:'Northern lights',detail:'A rainbow made for the runway',shape:'aurora',color:'#83bfb7',tags:['fancy','dreamy','bright'],collection:'vip',fresh:true },
+    { id:'diamond-dress',category:'dresses',name:'Diamond daydream',detail:'Little gems, big sparkle',shape:'diamond',color:'#8eafd1',tags:['sparkle','fancy'],collection:'vip',fresh:true },
+    { id:'tweed-jacket',category:'tops',name:'First-row jacket',detail:'A smart jacket with gold buttons',shape:'tweed',color:'#db91a5',tags:['fancy','cute'],collection:'vip',fresh:true },
+    { id:'tuxedo',category:'tops',name:'Opening night',detail:'A bow tie and satin lapels',shape:'tuxedo',color:'#32313f',tags:['fancy','sparkle'],collection:'vip',fresh:true },
+    { id:'palazzo',category:'bottoms',name:'Cloud palazzo',detail:'Wide legs and a soft swish',shape:'palazzo',color:'#f2e9d8',tags:['fancy','dreamy'],collection:'vip',fresh:true },
+    { id:'sequin-skirt',category:'bottoms',name:'Disco confetti',detail:'A skirt full of little gems',shape:'sequin',color:'#bda5d8',tags:['sparkle','bright'],collection:'vip',fresh:true },
+    { id:'pearl-shoes',category:'shoes',name:'Pearl slippers',detail:'A pearl for every step',shape:'pearlshoe',color:'#f2e9d8',tags:['fancy','dreamy'],collection:'vip',fresh:true },
+    { id:'diamond-boots',category:'shoes',name:'Spotlight boots',detail:'Sparkle all the way to the toes',shape:'diamondboot',color:'#8eafd1',tags:['fancy','sparkle'],collection:'vip',fresh:true },
+    { id:'royal-crown',category:'extras',slot:'head',name:'Crown jewel',detail:'A grand golden crown',shape:'royalcrown',color:'#edcc82',tags:['fancy','sparkle'],collection:'vip',fresh:true },
+    { id:'quilted-bag',category:'extras',slot:'bag',name:'Front-row bag',detail:'Soft quilting and a golden clasp',shape:'quiltedbag',color:'#db91a5',tags:['fancy','cute'],collection:'vip',fresh:true },
+    { id:'starlight-cape',category:'extras',slot:'back',name:'Starlight cape',detail:'A trail of runway stars',shape:'starcape',color:'#756689',tags:['sparkle','dreamy'],collection:'vip',fresh:true },
+    { id:'diamond-glow',category:'makeup',name:'Diamond glow',detail:'Pearl shimmer and tiny gems',shape:'diamond',color:'#8eafd1',tags:[],collection:'vip',fresh:true },
+    { id:'witch-dress',category:'dresses',name:'Midnight magic',detail:'A friendly little witch costume',shape:'witch',color:'#756689',tags:['dreamy','adventure'],collection:'halloween',fresh:true },
+    { id:'pumpkin-dress',category:'dresses',name:'Pumpkin patch',detail:'The happiest pumpkin in the mall',shape:'pumpkin',color:'#ed9854',tags:['bright','cute','nature'],collection:'halloween',fresh:true },
+    { id:'ghost-dress',category:'dresses',name:'Boo-tiful',detail:'A smiling ghost, never scary',shape:'ghost',color:'#f2e9d8',tags:['cute','dreamy'],collection:'halloween',fresh:true },
+    { id:'vampire-dress',category:'dresses',name:'Countess Cherry',detail:'Velvet and a storybook collar',shape:'vampire',color:'#a95665',tags:['fancy','dreamy'],collection:'halloween',fresh:true },
+    { id:'skeleton-top',category:'tops',name:'Funny bones top',detail:'A friendly skeleton costume',shape:'skeleton',color:'#32313f',tags:['adventure','cute'],collection:'halloween',fresh:true },
+    { id:'skeleton-bottom',category:'bottoms',name:'Funny bones trousers',detail:'Dancing bones on both legs',shape:'skeleton',color:'#32313f',tags:['adventure','cute'],collection:'halloween',fresh:true },
+    { id:'witch-hat',category:'extras',slot:'head',name:'Spellbound hat',detail:'A tall hat with a golden buckle',shape:'witchhat',color:'#756689',tags:['dreamy','adventure'],collection:'halloween',fresh:true },
+    { id:'wizard-hat',category:'extras',slot:'head',name:'Starry wizard',detail:'Stars on a pointy hat',shape:'wizardhat',color:'#8eafd1',tags:['dreamy','sparkle'],collection:'halloween',fresh:true },
+    { id:'pumpkin-beret',category:'extras',slot:'head',name:'Pumpkin topper',detail:'A little leaf and a curly stem',shape:'pumpkinhat',color:'#ed9854',tags:['nature','cute'],collection:'halloween',fresh:true },
+    { id:'bat-wings',category:'extras',slot:'back',name:'Little night wings',detail:'Take a friendly bat bow',shape:'batwings',color:'#514859',tags:['dreamy','adventure'],collection:'halloween',fresh:true },
+    { id:'trick-treat-bag',category:'extras',slot:'bag',name:'Treat time',detail:'A smiling pumpkin pail',shape:'pumpkinbag',color:'#ed9854',tags:['cute','bright'],collection:'halloween',fresh:true },
+    { id:'stripe-boots',category:'shoes',name:'Hocus-pocus boots',detail:'Stripes from top to toe',shape:'stripeboot',color:'#756689',tags:['dreamy','bright'],collection:'halloween',fresh:true },
+    { id:'ghost-paint',category:'makeup',name:'Boo cheeks',detail:'Two tiny friendly ghosts',shape:'ghost',color:'#f2e9d8',tags:[],collection:'halloween',fresh:true },
+    { id:'moon-paint',category:'makeup',name:'Moonlit magic',detail:'Stars for a magical costume',shape:'stardust',color:'#edcc82',tags:[],collection:'halloween',fresh:true },
+    { id:'cherry-dress',category:'dresses',name:'Cherry on top',detail:'Little cherries all around',shape:'cherry',color:'#db91a5',tags:['cute','summer','floral'],fresh:true },
+    { id:'plaid-dress',category:'dresses',name:'Picnic check',detail:'Checks and a bow at the waist',shape:'plaid',color:'#a4bba1',tags:['nature','casual','cute'],fresh:true },
+    { id:'raincoat',category:'tops',name:'Sunshine raincoat',detail:'Golden buttons for rainy days',shape:'raincoat',color:'#edcc82',tags:['adventure','bright'],fresh:true },
+    { id:'sport-tee',category:'tops',name:'Star player',detail:'Your own team of one',shape:'sport',color:'#83bfb7',tags:['sporty','bright'],fresh:true },
+    { id:'ribbon-flats',category:'shoes',name:'Ribbon dance',detail:'Soft shoes with little ribbons',shape:'ribbonshoe',color:'#db91a5',tags:['fancy','cute'],fresh:true },
+    { id:'sun-hat',category:'extras',slot:'head',name:'Sunday sunhat',detail:'A wide brim with a pretty bow',shape:'sunhat',color:'#edcc82',tags:['summer','nature'],fresh:true },
+    {id:'heart-necklace',category:'extras',slot:'neck',name:'Heart of gold',detail:'A tiny heart on a golden chain',shape:'heartnecklace',color:'#edcc82',tags:['cute','fancy'],fresh:true},
+    {id:'charm-bracelet',category:'extras',slot:'wrist',name:'Lucky little charms',detail:'Stars for your wrist',shape:'bracelet',color:'#edcc82',tags:['cute','sparkle'],fresh:true},
+    {id:'flower-earrings',category:'extras',slot:'ears',name:'Daisy drops',detail:'Flowers beside your smile',shape:'flowerearrings',color:'#f0ad88',tags:['floral','cute'],fresh:true},
+    {id:'diamond-earrings',category:'extras',slot:'ears',name:'Premiere drops',detail:'Little diamonds, lots of shimmer',shape:'diamondearrings',color:'#8eafd1',tags:['sparkle','fancy'],collection:'vip',fresh:true},
+    {id:'gem-necklace',category:'extras',slot:'neck',name:'Velvet jewel',detail:'A gem for a grand entrance',shape:'gemnecklace',color:'#bda5d8',tags:['sparkle','fancy'],collection:'vip',fresh:true},
+    {id:'pearl-bracelet',category:'extras',slot:'wrist',name:'Pearl wishes',detail:'A ring of tiny pearls',shape:'pearlbracelet',color:'#f2e9d8',tags:['fancy','dreamy'],collection:'vip',fresh:true},
+    {id:'bow-kitten',category:'extras',slot:'pet',name:'Miss Mittens',detail:'A kitten with a pretty bow',shape:'petcat',color:'#e4c2ad',tags:['cute','cozy'],fresh:true},
+    {id:'pocket-puppy',category:'extras',slot:'pet',name:'Button the puppy',detail:'A little pup in a bandana',shape:'petdog',color:'#edcc82',tags:['cute','adventure'],fresh:true},
+    {id:'bunny-friend',category:'extras',slot:'pet',name:'Clover the bunny',detail:'Floppy ears and a ribbon',shape:'petrabbit',color:'#f2e9d8',tags:['cute','nature'],fresh:true},
+    {id:'vip-poodle',category:'extras',slot:'pet',name:'Coco the poodle',detail:'A fluffy VIP with a golden bow',shape:'petpoodle',color:'#db91a5',tags:['fancy','cute'],collection:'vip',fresh:true},
+    {id:'vip-kitten',category:'extras',slot:'pet',name:'Duchess the kitten',detail:'A tiny crown for a tiny friend',shape:'petroyalcat',color:'#bda5d8',tags:['fancy','dreamy'],collection:'vip',fresh:true},
     { id: 'fresh-face', category: 'makeup', name: 'Fresh face', detail: 'Take the face paint off', shape: 'none', color: '#db91a5', tags: [] },
     { id: 'rosy', category: 'makeup', name: 'Rosy glow', detail: 'Soft cheeks and a rosy smile', shape: 'rosy', color: '#db91a5', tags: [] },
     { id: 'sunset', category: 'makeup', name: 'Peach sunset', detail: 'A warm sweep of color', shape: 'sunset', color: '#f0ad88', tags: [] },
@@ -94,6 +149,12 @@
     { id: 'butterfly-paint', category: 'makeup', name: 'Butterfly magic', detail: 'Little wings around your eyes', shape: 'butterfly', color: '#bda5d8', tags: [] },
     { id: 'freckles', category: 'makeup', name: 'Sunny freckles', detail: 'A sprinkle of sunshine', shape: 'freckles', color: '#e4c2ad', tags: [] },
     { id: 'kitty-paint', category: 'makeup', name: 'Kitty whiskers', detail: 'A nose and playful whiskers', shape: 'kitty', color: '#db91a5', tags: [] },
+    {id:'long-straight',category:'hair',name:'Silky waterfall',detail:'Long, smooth, and lovely',shape:'straight',color:'#493027',tags:[],fresh:true},
+    {id:'twin-tails',category:'hair',name:'Double swish',detail:'Two playful ponytails',shape:'twintails',color:'#d394a7',tags:[],fresh:true},
+    {id:'pixie',category:'hair',name:'Pixie sparkle',detail:'Short with a swoopy fringe',shape:'pixie',color:'#a58ebd',tags:[],fresh:true},
+    {id:'top-knot',category:'hair',name:'The top knot',detail:'A high bun with a ribbon',shape:'topknot',color:'#241e24',tags:[],fresh:true},
+    {id:'side-braid',category:'hair',name:'Storybook braid',detail:'One braid over the shoulder',shape:'sidebraid',color:'#e0ba76',tags:[],fresh:true},
+    {id:'puff-buns',category:'hair',name:'Cloud puffs',detail:'Two beautiful textured puffs',shape:'puffs',color:'#241e24',tags:[],fresh:true},
     { id: 'waves', category: 'hair', name: 'Soft waves', detail: 'Go with the flow', shape: 'waves', color: '#493027', tags: [] },
     { id: 'bob', category: 'hair', name: 'The little bob', detail: 'Short & sweet', shape: 'bob', color: '#8d5136', tags: [] },
     { id: 'curls', category: 'hair', name: 'Cloud curls', detail: 'Big, beautiful curls', shape: 'curls', color: '#241e24', tags: [] },
@@ -113,7 +174,7 @@
   const clone = value => JSON.parse(JSON.stringify(value));
   const piece = id => ({ id, color: byId[id].color });
   function defaultOutfit() {
-    return { dress: piece('petal'), top: null, bottom: null, shoes: piece('maryjanes'), hair: 'waves', hairColor: '#493027', skin: '#d39c79', makeup: 'fresh-face', makeupColor: '#db91a5', extras: { head: piece('hair-bow'), bag: null, neck: null, back: null } };
+    return { dress: piece('petal'), top: null, bottom: null, shoes: piece('maryjanes'), hair: 'waves', hairColor: '#493027', skin: '#d39c79', makeup: 'fresh-face', makeupColor: '#db91a5', extras: { head: piece('hair-bow'), bag: null, neck: null, back: null, ears:null, wrist:null, pet:null } };
   }
   function selection(outfit, item) {
     if (item.category === 'hair') return outfit.hair === item.id;
@@ -198,7 +259,7 @@
     result.makeupColor = COLORS.some(c => c.hex === raw.makeupColor) ? raw.makeupColor : byId[result.makeup].color;
     if (result.dress) { result.top = null; result.bottom = null; }
     else { result.top ||= piece('tee'); result.bottom ||= piece('pleated'); }
-    for (const slot of ['head', 'bag', 'neck', 'back']) result.extras[slot] = safePiece(raw.extras?.[slot], 'extras', slot);
+    for (const slot of ['head', 'bag', 'neck', 'back', 'ears', 'wrist', 'pet']) result.extras[slot] = safePiece(raw.extras?.[slot], 'extras', slot);
     return result;
   }
   function sanitizeLooks(raw) {
