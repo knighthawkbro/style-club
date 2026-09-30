@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { STORES, STATIONS, shopStock } from './world-rules.mjs';
+import { STORES, STATIONS, BENCH_BANKS, shopStock } from './world-rules.mjs';
 
 const mat=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.78,...extra});
 const cream=mat('#fff7e9'),stone=mat('#eee6df'),gold=mat('#c1a06c',{metalness:.45,roughness:.4});
@@ -39,10 +39,15 @@ export function buildMall(scene,catalog,{makeRack,makeDisplay,makeMirror,label,a
       box(room,[.38,4.5,.38],cream,[side*4.5,2.22,z]);box(room,[.52,.17,.52],gold,[side*4.5,.15,z]);
     }
     for(const z of[-10.8,10.8])plant(room,side*2.85,z);
-    for(const z of[-4.4,4.5]){
-      box(room,[.60,.18,1.7],mat('#b18b74'),[side*2.85,.52,z]);
-      box(room,[.11,.52,1.7],mat('#b18b74'),[side*3.13,.78,z]);
-      for(const dz of[-.6,.6])box(room,[.45,.5,.12],gold,[side*2.85,.25,z+dz]);
+  }
+  const benchWood=mat('#b18b74');
+  for(const bank of BENCH_BANKS){
+    const pair=new THREE.Group();pair.name='Back-to-back promenade benches';pair.position.set(bank.x,0,bank.z);room.add(pair);
+    box(pair,[.16,.60,1.7],benchWood,[0,.80,0]);
+    box(pair,[.18,.035,1.72],gold,[0,1.115,0]);
+    for(const side of[-1,1]){
+      box(pair,[.60,.18,1.7],benchWood,[side*.38,.52,0]);
+      for(const dz of[-.6,.6])box(pair,[.45,.5,.12],gold,[side*.38,.25,dz]);
     }
   }
   const banners=[];

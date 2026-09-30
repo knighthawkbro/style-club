@@ -43,6 +43,20 @@ test('local preview keeps its loopback default', async t => {
   assert.match(await response.text(), /Style Club/);
 });
 
+test('every versioned page asset is served with its normal content type', async t => {
+  const server = await launch(t);
+  const page = await (await fetch(server.base)).text();
+  const urls = [...page.matchAll(/(?:src|href)="([^"?#]+\.(?:js|css|svg)\?v=[a-f0-9]{16})"/g)].map(match => match[1]);
+  assert.equal(urls.length, 7, 'all game scripts, styles, and the icon are versioned');
+  for (const url of urls) {
+    const response = await fetch(server.base + '/' + url);
+    assert.equal(response.status, 200, url);
+    const type = url.includes('.js?') ? 'text/javascript' : url.includes('.css?') ? 'text/css' : 'image/svg+xml';
+    assert.ok(response.headers.get('content-type').startsWith(type), url);
+    assert.ok((await response.text()).length > 0);
+  }
+});
+
 test('container binding serves the complete game and keeps non-public files private', async t => {
   const server = await launch(t, '0.0.0.0');
   assert.equal(server.host, '0.0.0.0');

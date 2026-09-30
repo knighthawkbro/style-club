@@ -57,7 +57,7 @@ Vanilla HTML/CSS/JavaScript and Three.js, bundled locally into `scene3d.js`. Nod
 
 ```text
 npm start       Start the local preview
-npm run build   Rebuild the offline 3D bundle after source changes
+npm run build   Rebuild the offline 3D bundle and refresh asset version links
 npm run check   Check JavaScript syntax
 npm test        Run the game rules and artwork tests
 ```
@@ -76,6 +76,7 @@ npm test        Run the game rules and artwork tests
 - `app.js`: interactions, local storage, timer, sound, dialogs, and lookbook.
 - `styles.css` and `world.css`: desktop and mobile presentation.
 - `server.js`: a static server with an explicit public-file allowlist; defaults to loopback for local previews and uses `HOST=0.0.0.0` inside Docker.
+- `version-assets.mjs`: gives changed scripts and styles new URLs during game and Docker builds, preventing cached files from an older release from mixing with the new page.
 - `Dockerfile`, `compose.yaml`, and `.env.example`: deployment of the bundled game to a Docker host.
 
 No installation or build step is needed to play the bundled copy. For development, run `npm ci` once. Three.js and esbuild versions are pinned in the lockfile. The Three.js MIT license is included in `vendor/THREE-LICENSE.txt`. To add a wardrobe piece, update its catalog entry, illustrated thumbnail, and 3D geometry, then run `npm run build`.

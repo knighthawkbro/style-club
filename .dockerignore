@@ -2,6 +2,7 @@
 **
 !Dockerfile
 !server.js
+!version-assets.mjs
 !index.html
 !styles.css
 !world.css

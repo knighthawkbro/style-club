@@ -54,6 +54,8 @@ docker compose up -d --build
 
 Version 4 includes the fully stocked mall, VIP and Halloween collections, expanded salon, jewelry, held pets, model poses, friendly shopper conversations, and runway audience. All 115 items are on physical racks and shelves. The Compose ports and tunnel destination stay the same. Reload the game after the container update; saved outfits and lookbooks remain in the same browser storage.
 
+Docker builds automatically add content-based version tags to the page's script and stylesheet URLs. Changed files load under new URLs, so browser or Cloudflare caches can keep older files without mixing them into the updated game. Keep your proxy's normal cache key, including query strings, and allow the HTML page to revalidate. An existing tab needs a reload to open the new release; clearing site data is unnecessary.
+
 Stop and remove this deployment's container and network:
 
 ```sh
@@ -74,6 +76,6 @@ For public internet access, use your proxy's HTTPS and access controls if you wa
 
 ## Source changes
 
-The Docker image copies the included `scene3d.js` bundle. It does not rebuild the 3D source or include development dependencies. When developing changes to `src/`, run `npm ci` and `npm run build` in the source project before building the Docker image. Edits to the standalone HTML, CSS, or JavaScript files only need a Docker rebuild.
+The Docker image copies the included `scene3d.js` bundle and updates the asset version links. It does not rebuild the 3D source or include development dependencies. When developing changes to `src/`, run `npm ci` and `npm run build` in the source project before building the Docker image. Edits to the standalone HTML, CSS, or JavaScript files only need a Docker rebuild. `npm run build` also refreshes the version links for the local and direct-open game.
 
 Configuration references: [Docker Compose services](https://docs.docker.com/reference/compose-file/services/) and the [official Node image](https://hub.docker.com/_/node).

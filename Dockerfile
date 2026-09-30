@@ -7,8 +7,11 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 # The ready-to-play bundle is included; no npm install or build is needed.
-COPY server.js index.html styles.css world.css game.js art.js app.js scene3d.js favicon.svg ./
+COPY server.js version-assets.mjs index.html styles.css world.css game.js art.js app.js scene3d.js favicon.svg ./
 COPY vendor/THREE-LICENSE.txt ./vendor/THREE-LICENSE.txt
+
+# Give changed files new URLs, even when only HTML, CSS, or app.js was edited.
+RUN node version-assets.mjs
 
 USER node
 EXPOSE 4173

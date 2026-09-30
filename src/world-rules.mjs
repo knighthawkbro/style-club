@@ -1,6 +1,7 @@
 export const ROOM_LIMIT = 12.25;
 export const PLAYER_RADIUS = .29;
 export const WALK_SPEED = 2.9;
+export const BENCH_BANKS = [-6.8,7].map(z=>({x:0,z,halfX:.70,halfZ:.85}));
 export const STORES = [
   {id:'dresses',name:'Petal & Thread',detail:'Dresses & daydreams',side:-1,z:-9,color:'#dba5b9'},
   {id:'makeup',name:'GLOW beauty',detail:'Makeup & face paint',side:-1,z:-3,color:'#df9bae',beauty:true},
@@ -55,7 +56,7 @@ export const OBSTACLES = [
   {x:0,z:-.8,halfX:1.13,halfZ:1.13},
   {x:-1.8,z:7.4,halfX:.48,halfZ:.30},
   ...STORES.flatMap(s=>[-2.33,2.33].map(dz=>({x:s.side*4.91,z:s.z+dz,halfX:.29,halfZ:.49}))),
-  ...[-1,1].flatMap(side=>[-4.4,4.5].map(z=>({x:side*2.85,z,halfX:.32,halfZ:.85}))),
+  ...BENCH_BANKS,
   ...[-1,1].flatMap(side=>[-10.8,10.8].map(z=>({x:side*2.85,z,halfX:.32,halfZ:.32})))
 ];
 export function walkable(x,z,obstacles=OBSTACLES,radius=PLAYER_RADIUS){

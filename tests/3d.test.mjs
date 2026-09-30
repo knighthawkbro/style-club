@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import G from '../game.js';
 import { buildCharacter, buildDisplayItem, BODY_PROFILE, fittedProfile, loftGeometry } from '../src/model3d.mjs';
-import { STATIONS, STORES, OBSTACLES, movePlayer, planPath, walkable, nearbyStation, ROOM_LIMIT, WALK_SPEED, advancePath, clearSegment, itemsForStation, shopStock, storeAt } from '../src/world-rules.mjs';
+import { STATIONS, STORES, BENCH_BANKS, OBSTACLES, movePlayer, planPath, walkable, nearbyStation, ROOM_LIMIT, WALK_SPEED, advancePath, clearSegment, itemsForStation, shopStock, storeAt } from '../src/world-rules.mjs';
 import { ShopperBrain } from '../src/shoppers.mjs';
 import { footStep, STRIDE_LENGTH } from '../src/motion.mjs';
 import { makeAudience } from '../src/audience.mjs';
@@ -97,6 +97,15 @@ test('click-to-walk routes reach every station without crossing furniture', () =
     assert.ok(path.length, station.id);
     for(const p of path)assert.ok(walkable(p.x,p.z),`${station.id}: route must be walkable`);
     const last=path.at(-1);assert.equal(nearbyStation(last)?.id,station.id);
+  }
+});
+
+test('central seating leaves both storefront paths and the starting position clear',()=>{
+  assert.ok(walkable(0,5.3),'the player starts outside the new benches');
+  for(const bank of BENCH_BANKS)assert.equal(walkable(bank.x,bank.z),false,'seating has a solid collision boundary');
+  for(const side of[-1,1]){
+    assert.ok(clearSegment({x:side*3.6,z:-11.8},{x:side*3.6,z:11.8}),'the path along the shops is clear');
+    for(const z of[-4.4,4.5])assert.ok(walkable(side*2.85,z),'old bench locations no longer block walking');
   }
 });
 
