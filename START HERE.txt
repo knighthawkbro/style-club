@@ -10,11 +10,17 @@ Explore your 3D fashion mall! Mall map walks you to any of the eight boutiques. 
 
 Drag to look around. Near a rack, press E or the Try button. Choose a piece in the dressing room to wear it. Outfit view lets you turn the character and see every side.
 
-Drag clothes straight from a 3D rack onto your character! All 115 pieces are out on racks and shelves: walk around the shops to find them. You can also drag the dressing-room cards with the mouse. Look for the "Drop to wear" outline.
+Drag clothes straight from a 3D rack onto your character! All 117 pieces are out on racks and shelves: walk around the shops to find them. You can also drag the dressing-room cards with the mouse. Look for the "Drop to wear" outline.
 
 Try the Makeup tab and Face view for face paint and cheek colors. Fresh face washes it off. Strike a pose opens sixteen poses, including model poses, a twirl, and a superhero pose. When you stop walking, your chosen pose comes back.
 
 Poppy, Nova, and Jules walk around, try outfits, and notice your new look with cute speech bubbles. Click a nearby friend, press F, or tap Say hi. Pose together makes a matching pose! Their words are friendly lines written into the game. Tap "3 mall friends" for a quiet room.
+
+Choose Shopping friends, then Invite Poppy, Nova, or Jules. She follows you between shops, suggests outfits, sits beside you on the benches, and joins your runway walk.
+
+Be a stylist lets you make outfits for your friends! Choose Style Poppy, Nova, or Jules, pick a Halloween party, concert, or picnic, and dress her with the wardrobe cards. Match my outfit makes matching clothes. Done returns to your own character. Everyone to runway brings all four of you to the fashion show. Save the group in your lookbook!
+
+Try the Salon chair, Makeup vanity, Dressing mirror, and Photo booth buttons beneath the game. At the vanity, choose a face paint and color, then drag a brush or sponge onto your character or choose Apply. Watch her lift it to her face! Heels from Sole Mates have their own shorter, slower steps. The Photo booth has backgrounds, friends, poses, and stickers, including Halloween decorations.
 
 Use Full screen to fill the display. Exit full screen or Escape takes you back. If your browser cannot use full screen, the game expands to fill the window instead.
 
@@ -22,7 +28,7 @@ Choose a theme, try on clothes, and visit the runway. Free play gives you unlimi
 
 The 3D game needs a browser that supports WebGL 2. If it says graphics could not start, try a recent Edge or Chrome browser.
 
-Save your favorite outfits in My lookbook. The lookbook stays in this browser on this device. Download your favorite outfit pictures before clearing browser data or moving to a different computer.
+Save your favorite outfits in My lookbook. The lookbook and styled friends stay in this browser on this device. Download lookbook backup keeps outfits, group pictures, booth photos, and friends' styles in a file you can restore later. Keep a backup before clearing browser site data or moving to another device. Reloading the game after an update keeps your saves; there is no need to clear site data. Download individual PNG pictures to keep finished images too.
 
 Have fun making something that's all you!
 

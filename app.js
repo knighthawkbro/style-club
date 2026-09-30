@@ -10,6 +10,8 @@
   let dragState = null, cardPointer = null, suppressClickUntil = 0, friends = true;
   let collection = '', extraFilter = 'all';
   let activityState=null,makeupDraft=null,suggestion=null,photoDraft=null,photoFriends=[],photoAvailable=false,photoFrame=0;
+  let stylingName=null,friendStyles={},makeupTool='brush';
+  const friendHistory={};
   const portraitCache = new Map();
   let timer = { mode: 'free', status: 'ready', remaining: 180000, deadline: null, interval: null };
 
@@ -18,12 +20,13 @@
     if (raw && raw.version === 1) {
       outfit = G.sanitizeOutfit(raw.outfit);
       looks = G.sanitizeLooks(raw.looks);
+      friendStyles=G.sanitizeFriendStyles(raw.friendStyles);
       themeId = G.THEMES.some(t => t.id === raw.themeId) ? raw.themeId : 'garden';
     }
   } catch { storageWarning = true; }
 
   function persist() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, outfit, themeId, looks })); return true; }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, outfit, themeId, looks,friendStyles })); return true; }
     catch {
       if (!storageWarning) { toast('This browser can’t save right now. You can still play and download your looks.'); storageWarning = true; }
       return false;
@@ -59,6 +62,7 @@
     return G.ITEMS.filter(item=>item.category===category&&inCollection(item)&&(category!=='extras'||extraFilter==='all'||(extraFilter==='pets'?item.slot==='pet':['neck','ears','wrist'].includes(item.slot)))).sort((a,b)=>Number(!!b.fresh)-Number(!!a.fresh));
   }
   function activePiece() {
+    const outfit=editingOutfit();
     if(makeupDraft&&category==='makeup')return G.byId[makeupDraft.id];
     const preferred = G.byId[selectedId];
     const items=currentItems();
@@ -66,22 +70,24 @@
     return items.find(item => G.selection(outfit, item));
   }
   function pieceColor(item) {
+    const outfit=editingOutfit();
     if(makeupDraft&&item.id===makeupDraft.id)return makeupDraft.color;
     if (item.category === 'hair') return outfit.hairColor;
     if (item.category === 'makeup') return G.selection(outfit,item) ? outfit.makeupColor : item.color;
     return G.worn(outfit).find(p => p.id === item.id)?.color || item.color;
   }
   function describeOutfit() {
+    const outfit=editingOutfit();
     const clothes = G.worn(outfit).map(p => G.byId[p.id].name);
-    return `Your character wearing ${clothes.join(', ')}, with ${G.byId[outfit.hair].name.toLowerCase()}${outfit.makeup&&outfit.makeup!=='fresh-face'?` and ${G.byId[outfit.makeup].name.toLowerCase()}`:''}.`;
+    return `${stylingName||'Your character'} wearing ${clothes.join(', ')}, with ${G.byId[outfit.hair].name.toLowerCase()}${outfit.makeup&&outfit.makeup!=='fresh-face'?` and ${G.byId[outfit.makeup].name.toLowerCase()}`:''}.`;
   }
   function renderAvatar() {
     const label = describeOutfit();
-    if (boutique) boutique.setOutfit(outfit);
+    if (boutique) {if(stylingName)boutique.styleFriend(stylingName,editingOutfit());else boutique.setOutfit(outfit);}
     else $('#avatar').innerHTML = A.avatar(outfit, G.byId, { label });
     $('#avatar').setAttribute('aria-label', label);
     $('#avatar').className = boutique ? 'world-host' : `avatar pose-${pose}`;
-    $('#undo-button').disabled = history.length === 0;
+    $('#undo-button').disabled = editingHistory().length === 0;
   }
   function renderTheme() {
     const t = theme();
@@ -93,6 +99,7 @@
     boutique?.setTheme(t);
   }
   function renderWardrobe(resetScroll = false) {
+    const outfit=editingOutfit();
     const grid = $('#wardrobe-grid'), scroll = resetScroll ? 0 : grid.scrollTop;
     const focusItem = document.activeElement?.dataset.item;
     const focusColor = document.activeElement?.dataset.color;
@@ -104,13 +111,13 @@
     document.querySelectorAll('[data-extra-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.extraFilter===extraFilter)));
     const items = currentItems();
     $('#item-count').textContent = `${items.length} ${['hair','makeup'].includes(category) ? 'styles' : 'pieces'}`;
-    $('#wardrobe-tip').textContent = category==='makeup'?'Face paint, cheek color, and smiles. Fresh face washes it off.':category==='extras'?'Tap a worn extra to take it off. Jewelry, a bag, and a pet can go together.':collection==='vip'?'Your VIP invitation: everything here is yours to wear.':'Drag a piece onto your character, or tap to wear.';
+    $('#wardrobe-tip').textContent = category==='makeup'?'Face paint, cheek color, and smiles. Fresh face washes it off.':category==='extras'?'Tap a worn extra to take it off. Jewelry, a bag, and a pet can go together.':collection==='vip'?'Your VIP invitation: everything here is yours to wear.':`Drag a piece onto ${stylingName||'your character'}, or tap to wear.`;
     grid.setAttribute('aria-label', G.CATEGORIES.find(cat => cat.id === category).label);
     grid.setAttribute('aria-labelledby', `tab-${category}`);
     grid.innerHTML = items.map(item => {
       const selected = makeupDraft&&category==='makeup'?makeupDraft.id===item.id:G.selection(outfit, item), color = category === 'hair' ? outfit.hairColor : pieceColor(item);
       const onBrush=makeupDraft&&category==='makeup',action=onBrush?'put on your brush':selected&&item.category==='extras'?'remove':'wear';
-      return `<button class="item-card ${selected ? 'selected' : ''}" data-item="${item.id}" draggable="false" title="Drag ${A.esc(item.name)} onto your character, or click to ${action}" aria-pressed="${selected}" aria-label="${A.esc(item.name)}${selected ? onBrush?', on your brush':', wearing' : ''}"><div class="item-art">${A.thumbnail(item, color)}${selected ? `<span class="selected-tick">${A.icon('check')}</span>` : ''}${item.fresh?'<span class="new-piece">NEW</span>':''}<span class="color-dot" style="background:${color}"></span></div><span class="item-label"><span class="item-name">${A.esc(item.name)}</span><span class="item-detail">${A.esc(item.detail)}</span></span></button>`;
+      return `<button class="item-card ${selected ? 'selected' : ''}" data-item="${item.id}" draggable="false" title="Drag ${A.esc(item.name)} onto ${stylingName||'your character'}, or click to ${action}" aria-pressed="${selected}" aria-label="${A.esc(item.name)}${selected ? onBrush?', on your brush':', wearing' : ''}"><div class="item-art">${A.thumbnail(item, color)}${selected ? `<span class="selected-tick">${A.icon('check')}</span>` : ''}${item.fresh?'<span class="new-piece">NEW</span>':''}<span class="color-dot" style="background:${color}"></span></div><span class="item-label"><span class="item-name">${A.esc(item.name)}</span><span class="item-detail">${A.esc(item.detail)}</span></span></button>`;
     }).join('') || '<p class="empty-collection">Try All extras to see what’s in this boutique.</p>';
     grid.scrollTop = scroll;
     const active = activePiece(), colors = category === 'hair' ? G.HAIR_COLORS : G.COLORS;
@@ -124,11 +131,15 @@
     if (focusItem) grid.querySelector(`[data-item="${focusItem}"]`)?.focus({ preventScroll: true });
     if (focusColor) $('#color-swatches').querySelector(`[data-color="${focusColor}"]`)?.focus({ preventScroll: true });
   }
+  function editingOutfit(){return stylingName?friendStyles[stylingName].outfit:outfit;}
+  function editingHistory(){return stylingName?(friendHistory[stylingName]||=[]):history;}
   function changeOutfit(next) {
-    history.push(G.clone(outfit));
-    if (history.length > 40) history.shift();
-    outfit = next; runwayDraft = null;
+    const previous=editingOutfit(),undo=editingHistory();undo.push(G.clone(previous));if(undo.length>40)undo.shift();
+    const action=previous.makeup!==next.makeup||previous.makeupColor!==next.makeupColor?'brush':previous.hair!==next.hair||previous.hairColor!==next.hairColor?'hair':'dress';
+    if(stylingName)friendStyles[stylingName].outfit=next;else outfit=next;
+    runwayDraft = null;
     renderAvatar(); renderWardrobe(); persist(); chime();
+    boutique?.performAction(action,{tool:makeupTool,color:next.makeupColor});
   }
   function chooseCategory(id, focus = false) {
     category = id; selectedId = null; extraFilter='all'; renderWardrobe(true);
@@ -192,16 +203,19 @@
     $('#theme-grid').innerHTML = G.THEMES.map(t => `<button class="theme-option ${t.id === themeId ? 'active' : ''}" style="--theme-bg:${t.bg}" data-theme="${t.id}" aria-pressed="${t.id === themeId}"><span aria-hidden="true">${t.icon}</span><strong>${A.esc(t.name)}</strong><small>${A.esc(t.hint)}</small></button>`).join('');
     openDialog('#theme-dialog');
   }
-  function showRunway() {
+  function showRunway(everyone=false) {
     pauseTimer();
+    const group=everyone===true||!!stylingName;stopStyling(false);
     boutique?.leaveActivity();
-    if (!runwayDraft) runwayDraft = { outfit: G.clone(outfit), pose, themeId, name: `${theme().name} daydream`, savedId: null };
+    const party=group?boutique?.friendLooks()||[]:boutique?.companionLook()?[boutique.companionLook()]:[];
+    if (!runwayDraft||JSON.stringify(runwayDraft.friends)!==JSON.stringify(party)) runwayDraft = { outfit: G.clone(outfit), pose, themeId, friends:party,name:group?'Our friends’ fashion show':`${theme().name} daydream`, savedId: null };
     const result = G.score(runwayDraft.outfit, runwayDraft.themeId);
     $('#result-theme').textContent = theme().name;
     $('#result-stars').innerHTML = `${'★'.repeat(result.stars)}<span class="empty-star">${'☆'.repeat(5 - result.stars)}</span>`;
     $('#result-stars').setAttribute('aria-label', `${result.stars} out of 5 style stars`);
     $('#result-title').textContent = result.title;
     $('#result-description').textContent = result.description;
+    $('#runway-company').hidden=!runwayDraft.friends.length;$('#runway-company').textContent=`You + ${runwayDraft.friends.map(f=>f.name).join(' + ')}`;
     $('#result-badges').innerHTML = result.badges.map(badge => `<span>✧ ${A.esc(badge)}</span>`).join('');
     $('#look-name').value = runwayDraft.name;
     $('#save-button').disabled = !!runwayDraft.savedId;
@@ -212,7 +226,7 @@
     if (boutique) {
       try {
         runway3d ||= new window.Style3D.Runway($('#runway-avatar'), G.byId);
-        runway3d.show(runwayDraft.outfit,runwayDraft.pose,boutique.companionLook());
+        runway3d.show(runwayDraft.outfit,runwayDraft.pose,runwayDraft.friends);
       } catch (error) { console.error('Runway graphics:', error); $('#runway-avatar').innerHTML = A.avatar(runwayDraft.outfit, G.byId, { label: 'Your finished runway look' }); }
     } else $('#runway-avatar').innerHTML = A.avatar(runwayDraft.outfit, G.byId, { label: 'Your finished runway look' });
     chime('runway');
@@ -224,7 +238,7 @@
     if (!name) { $('#look-name').setCustomValidity('Give your look a little name first.'); $('#look-name').reportValidity(); return; }
     if (looks.length >= 40) { toast('Your lookbook has 40 looks! Download a favorite, then remove a look to make room.'); return; }
     const id = window.crypto?.randomUUID?.() || `look-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    looks.unshift({ id, name, themeId: runwayDraft.themeId, outfit: G.clone(runwayDraft.outfit), pose:runwayDraft.pose, date: new Date().toISOString() });
+    looks.unshift({ id, name, themeId: runwayDraft.themeId, outfit: G.clone(runwayDraft.outfit), pose:runwayDraft.pose, date: new Date().toISOString(),...(runwayDraft.friends.length?{friends:G.sanitizeFriends(runwayDraft.friends)}:{}) });
     runwayDraft.savedId = id; runwayDraft.name = name;
     const saved = persist(); updateCount();
     $('#save-button').disabled = true; $('#save-button').innerHTML = A.icon('check') + 'Saved to lookbook'; $('#look-name').disabled = true;
@@ -233,11 +247,11 @@
   function updateCount() { $('#look-count').textContent = String(looks.length); }
   function portraitMarkup(look) {
     if (!boutique) return A.avatar(look.outfit, G.byId, { label: look.name });
-    const key = JSON.stringify([look.outfit,look.pose,look.photo]);
+    const key = JSON.stringify([look.outfit,look.pose,look.photo,look.friends]);
     try {
       if (!portraitCache.has(key)) {
         if (portraitCache.size >= 50) portraitCache.delete(portraitCache.keys().next().value);
-        portraitCache.set(key, look.photo?window.Style3D.photo(look.outfit,G.byId,look.pose??1,look.photo):window.Style3D.portrait(look.outfit, G.byId,look.pose??1));
+        portraitCache.set(key, look.photo||look.friends?.length?window.Style3D.photo(look.outfit,G.byId,look.pose??1,look.photo||{background:'stars',friends:look.friends}):window.Style3D.portrait(look.outfit, G.byId,look.pose??1));
       }
       return `<img src="${portraitCache.get(key)}" alt="${A.esc(look.name)}" width="440" height="600">`;
     } catch { return A.avatar(look.outfit, G.byId, { label: look.name }); }
@@ -250,10 +264,11 @@
     }
     grid.innerHTML = looks.map(look => {
       const t = G.THEMES.find(t => t.id === look.themeId);
-      return `<article class="look-card ${look.photo?'is-photo':''}"><div class="look-card-preview" style="--look-bg:${t.bg}">${portraitMarkup(look)}</div><div class="look-card-info"><h3 title="${A.esc(look.name)}">${A.esc(look.name)}</h3><span class="look-theme">${look.photo?`Photo booth · ${A.esc(G.PHOTO_BACKGROUNDS.find(b=>b.id===look.photo.background).name)}`:`${A.esc(t.name)} · ${G.score(look.outfit, look.themeId).stars} style stars`}</span><div class="look-card-actions"><button class="text-button" data-wear="${look.id}">Style again ${A.icon('arrow')}</button><div><button class="icon-button" data-download="${look.id}" aria-label="Download ${A.esc(look.name)}" title="Download a picture">${A.icon('download')}</button><button class="icon-button" data-delete="${look.id}" aria-label="Remove ${A.esc(look.name)}" title="Remove this look">${A.icon('trash')}</button></div></div></div></article>`;
+      return `<article class="look-card ${look.photo||look.friends?.length?'is-photo':''}"><div class="look-card-preview" style="--look-bg:${t.bg}">${portraitMarkup(look)}</div><div class="look-card-info"><h3 title="${A.esc(look.name)}">${A.esc(look.name)}</h3><span class="look-theme">${look.photo?`Photo booth · ${A.esc(G.PHOTO_BACKGROUNDS.find(b=>b.id===look.photo.background).name)}`:look.friends?.length?'Friends’ fashion show':`${A.esc(t.name)} · ${G.score(look.outfit, look.themeId).stars} style stars`}</span><div class="look-card-actions"><button class="text-button" data-wear="${look.id}">Style again ${A.icon('arrow')}</button><div><button class="icon-button" data-download="${look.id}" aria-label="Download ${A.esc(look.name)}" title="Download a picture">${A.icon('download')}</button><button class="icon-button" data-delete="${look.id}" aria-label="Remove ${A.esc(look.name)}" title="Remove this look">${A.icon('trash')}</button></div></div></div></article>`;
     }).join('');
   }
   function switchView(next) {
+    if(next!=='studio')stopStyling(false);
     view = next;
     if (next !== 'studio') pauseTimer();
     $('#studio-view').hidden = next !== 'studio'; $('#lookbook-view').hidden = next !== 'lookbook';
@@ -270,7 +285,7 @@
     if (boutique) {
       try {
         const anchor = document.createElement('a');
-        anchor.href = look.photo?window.Style3D.photo(look.outfit,G.byId,look.pose??1,look.photo):window.Style3D.portrait(look.outfit, G.byId,look.pose??1);
+        anchor.href = look.photo||look.friends?.length?window.Style3D.photo(look.outfit,G.byId,look.pose??1,look.photo||{background:'stars',friends:look.friends}):window.Style3D.portrait(look.outfit, G.byId,look.pose??1);
         anchor.download = `style-club-${look.name.replace(/[^a-z0-9]+/gi, '-').slice(0, 40) || 'my-look'}.png`;
         document.body.appendChild(anchor); anchor.click(); anchor.remove();
         toast('Your 3D outfit picture is ready to keep. Check your downloads.'); return;
@@ -301,14 +316,31 @@
   function applyPaint(wash=false){
     if(!makeupDraft)return;
     const id=wash?'fresh-face':makeupDraft.id;
-    changeOutfit(G.recolor(G.wear(outfit,id),id,makeupDraft.color));
+    changeOutfit(G.recolor(G.wear(editingOutfit(),id),id,makeupDraft.color));boutique.performAction('brush',{tool:makeupTool,color:makeupDraft.color});
     toast(wash?'All fresh! Pick another design whenever you like.':`${G.byId[id].name} — a little brush of magic!`);
     boutique.canvas.dataset.appliedPaint=id;
   }
-  function showShoppingFriends(){
+  function showShoppingFriends(stylist=false){
     if(!boutique)return;
-    $('#friend-picker').innerHTML=boutique.friendLooks().map(friend=>`<article class="friend-choice"><img src="${window.Style3D.portrait(friend.outfit,G.byId,2)}" alt="${friend.name}"><strong>${friend.name}</strong><button data-invite="${friend.name}">${boutique.companionLook()?.name===friend.name?'Shopping together':`Invite ${friend.name}`}</button></article>`).join('');
+    $('#friends-title').textContent=stylist===true?'Who are we styling today?':'Who’s coming shopping?';
+    $('#friends-copy').textContent=stylist===true?'Choose an occasion, dress your friend, then put on a fashion show together.':'Invite a friend to follow you between shops, share a bench, and join the runway.';
+    $('#friend-picker').innerHTML=boutique.friendLooks().map((friend,i)=>`<article class="friend-choice"><img src="${window.Style3D.portrait(friend.outfit,G.byId,2)}" alt="${friend.name}"><strong>${friend.name}</strong><small>${G.STYLING_REQUESTS.find(r=>r.id===(friendStyles[friend.name]?.occasion||G.STYLING_REQUESTS[i].id)).name}</small><button data-invite="${friend.name}">${boutique.companionLook()?.name===friend.name?'Shopping together':`Invite ${friend.name}`}</button><button class="style-friend-choice" data-style-friend="${friend.name}">Style ${friend.name} ✧</button></article>`).join('');
     openDialog('#friends-dialog');
+  }
+  function startStyling(name){
+    const friend=boutique?.friendLooks().find(f=>f.name===name);if(!friend)return;
+    stopStyling(false);boutique.leaveActivity();
+    friendStyles[name]||={outfit:friend.outfit,occasion:G.STYLING_REQUESTS[G.FRIEND_NAMES.indexOf(name)].id};
+    stylingName=name;makeupDraft=null;selectedId=null;extraFilter='all';
+    boutique.editFriend(name);$('#stylist-panel').hidden=false;$('#styling-label').hidden=false;$('#styling-label').textContent=`✧ Styling ${name}`;
+    $('#stylist-name').textContent=`Styling ${name}`;$('#stylist-occasion').innerHTML=G.STYLING_REQUESTS.map(r=>`<option value="${r.id}">${r.icon} ${r.name}</option>`).join('');$('#stylist-occasion').value=friendStyles[name].occasion;
+    renderStylingRequest();collection=stylingRequest().collection;category='dresses';renderAvatar();renderWardrobe(true);persist();
+    toast(`${name}: ${stylingRequest().copy}`);
+  }
+  function stylingRequest(){return G.STYLING_REQUESTS.find(r=>r.id===friendStyles[stylingName]?.occasion)||G.STYLING_REQUESTS[0];}
+  function renderStylingRequest(){if(stylingName)$('#stylist-request').textContent=`${stylingName}: “${stylingRequest().copy}”`;}
+  function stopStyling(walk=true){
+    if(!stylingName)return;stylingName=null;boutique.editFriend(null);$('#stylist-panel').hidden=true;$('#styling-label').hidden=true;makeupDraft=null;selectedId=null;renderAvatar();renderWardrobe();if(walk)boutique.setView('walk');
   }
   function companionChanged(name){
     $('#companion-card').hidden=!name;$('#companion-name').textContent=name?`♡ Shopping with ${name}`:'';
@@ -354,15 +386,17 @@
     looks.unshift(look);photoDraft.savedId=id;const saved=persist();updateCount();$('#save-photo').disabled=true;$('#save-photo').textContent='Saved to lookbook ✓';$('#photo-status').textContent=saved?'Your moment is in My lookbook. Download it there, or keep creating!':'Saved for this visit. Download a lookbook backup to keep it.';chime('save');
   }
   function backupLooks(){
-    const data=JSON.stringify({format:'style-club-lookbook',version:1,created:new Date().toISOString(),looks:G.sanitizeLooks(looks)},null,2);
+    const data=JSON.stringify({format:'style-club-lookbook',version:1,created:new Date().toISOString(),looks:G.sanitizeLooks(looks),friendStyles:G.sanitizeFriendStyles(friendStyles)},null,2);
     const url=URL.createObjectURL(new Blob([data],{type:'application/json'})),anchor=document.createElement('a');anchor.href=url;anchor.download=`style-club-lookbook-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Keep this backup file. Restore it here to bring back your outfits and photos.');
   }
   async function restoreLooks(event){
     const file=event.target.files?.[0];if(!file)return;
     try{
       if(file.size>1000000)throw new Error('Choose a Style Club backup smaller than 1 MB.');
-      const result=G.mergeLooks(looks,G.readBackup(await file.text()));looks=result.looks;const saved=persist();renderLookbook();
-      toast(result.added?(saved?`Restored ${result.added} saved ${result.added===1?'look':'looks'}. Your existing looks are still here.`:'Restored for this visit. This browser cannot save right now; keep your backup file.'):'Those looks are already in your lookbook.');
+      const backup=G.readBackupData(await file.text()),result=G.mergeLooks(looks,backup.looks);let restoredFriends=0;
+      for(const [name,style]of Object.entries(backup.friendStyles))if(!Object.hasOwn(friendStyles,name)){friendStyles[name]=style;boutique?.styleFriend(name,style.outfit);restoredFriends++;}
+      looks=result.looks;const saved=persist();renderLookbook();
+      toast(result.added||restoredFriends?(saved?`Restored ${result.added} saved looks and ${restoredFriends} friend styles. Existing looks are still here.`:'Restored for this visit. This browser cannot save right now; keep your backup file.'):'Those looks and friend styles are already here.');
     }catch(error){toast(error.message||'That backup could not be restored. Your existing looks are safe.');}
     finally{event.target.value='';}
   }
@@ -394,12 +428,13 @@
     $('#drag-preview').hidden=true;$('#character-drop-target').hidden=true;document.body.classList.remove('dressing-drag');
     boutique.canvas.dataset.lastDrop=accepted?id:'canceled';
     if(accepted&&kind==='paint')applyPaint();
-    else if(accepted){selectedId=id;category=G.byId[id].category;collection=G.byId[id].collection||'';extraFilter='all';changeOutfit(G.wear(outfit,id));if(category==='makeup'&&!activityState)boutique.setView('face');toast(`${G.byId[id].name} — looking lovely!`);}
+    else if(accepted){selectedId=id;category=G.byId[id].category;collection=G.byId[id].collection||'';extraFilter='all';changeOutfit(G.wear(editingOutfit(),id));if(category==='makeup'&&!activityState)boutique.setView('face');toast(`${G.byId[id].name} — looking lovely!`);}
     else if(!canceled)toast('Drop the piece over your character to wear it.');
   }
   document.addEventListener('pointerdown',event=>{
     const button=event.target.closest('[data-item],[data-brush]');if(!button||event.button!==0||!boutique||(event.pointerType==='touch'&&!button.dataset.brush))return;
     if(button.dataset.brush&&!makeupDraft)return;
+    if(button.dataset.brush)makeupTool=button.dataset.brush;
     cardPointer={id:button.dataset.brush?makeupDraft.id:button.dataset.item,kind:button.dataset.brush?'paint':'piece',pointerId:event.pointerId,button,x:event.clientX,y:event.clientY};button.setPointerCapture(event.pointerId);
   });
   document.addEventListener('pointermove',event=>{
@@ -430,9 +465,10 @@
   document.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button || button.disabled) return;
     const data = button.dataset;
-    if(data.invite){boutique.invite(data.invite);closeDialog($('#friends-dialog'));toast(`${data.invite} is coming along! Pick a shop and explore together.`);}
+    if(data.styleFriend){closeDialog($('#friends-dialog'));startStyling(data.styleFriend);}
+    else if(data.invite){stopStyling();boutique.invite(data.invite);closeDialog($('#friends-dialog'));toast(`${data.invite} is coming along! Pick a shop and explore together.`);}
     else if(data.activity){closeDialog($('#mall-dialog'));boutique?.startActivity(data.activity);toast('Let’s walk over. You can keep exploring whenever you like.');}
-    else if(data.brush)toast('Your brush is ready. Drag it onto your character, tap your face, or choose Apply.');
+    else if(data.brush){makeupTool=data.brush;toast('Your tool is ready. Drag it onto your character, tap your face, or choose Apply.');}
     else if(data.photoBackground){photoDraft.background=data.photoBackground;renderPhotoBase();}
     else if(data.photoFriend){const name=data.photoFriend;photoDraft.friends=photoDraft.friends.includes(name)?photoDraft.friends.filter(f=>f!==name):[...photoDraft.friends,name];renderPhotoBase();}
     else if(data.addSticker){if(photoDraft.stickers.length>=12){$('#photo-status').textContent='Twelve stickers is a full sheet! Remove one to add another.';return;}photoDraft.stickers.push({id:data.addSticker,x:.14+(photoDraft.stickers.length%4)*.23,y:.18+Math.floor(photoDraft.stickers.length/4)*.24,size:.085});photoChanged();renderPhotoStickers(photoDraft.stickers.length-1);}
@@ -442,14 +478,15 @@
     else if (data.collection !== undefined) {collection=data.collection;extraFilter='all';selectedId=null;renderWardrobe(true);}
     else if (data.extraFilter) {extraFilter=data.extraFilter;selectedId=null;renderWardrobe(true);}
     else if (data.visit) {closeDialog($('#mall-dialog'));boutique?.visit(data.visit);toast(`Let’s walk to ${window.Style3D.STATIONS.find(s=>s.id===data.visit).name}.`);}
-    else if (data.item) { selectedId = data.item;if(makeupDraft&&G.byId[data.item].category==='makeup'){makeupDraft.id=data.item;renderWardrobe();paintChoice();if(data.item==='fresh-face')applyPaint(true);}else changeOutfit(G.equip(outfit, data.item)); }
-    else if (data.color) { const item = activePiece(); if (item) { selectedId = item.id;if(makeupDraft&&category==='makeup'){makeupDraft.color=data.color;renderWardrobe();paintChoice();}else changeOutfit(G.recolor(outfit, item.id, data.color)); } }
-    else if (data.skin) { const next = G.clone(outfit); next.skin = data.skin; changeOutfit(next); $(`[data-skin="${data.skin}"]`).focus({ preventScroll: true }); }
+    else if (data.item) { selectedId = data.item;if(makeupDraft&&G.byId[data.item].category==='makeup'){makeupDraft.id=data.item;renderWardrobe();paintChoice();if(data.item==='fresh-face')applyPaint(true);}else changeOutfit(G.equip(editingOutfit(), data.item)); }
+    else if (data.color) { const item = activePiece(); if (item) { selectedId = item.id;if(makeupDraft&&category==='makeup'){makeupDraft.color=data.color;renderWardrobe();paintChoice();}else changeOutfit(G.recolor(editingOutfit(), item.id, data.color)); } }
+    else if (data.skin) { const next = G.clone(editingOutfit()); next.skin = data.skin; changeOutfit(next); $(`[data-skin="${data.skin}"]`).focus({ preventScroll: true }); }
     else if (data.pose !== undefined) choosePose(Number(data.pose));
     else if (data.theme) { newTheme(data.theme); closeDialog($('#theme-dialog')); toast(theme().hint); }
     else if (data.close !== undefined) closeDialog(button.closest('dialog'));
     else if (data.wear) {
       const look = looks.find(l => l.id === data.wear); if (!look) return;
+      stopStyling(false);for(const friend of look.friends||look.photo?.friends||[]){friendStyles[friend.name]={outfit:G.clone(friend.outfit),occasion:friendStyles[friend.name]?.occasion||G.STYLING_REQUESTS[G.FRIEND_NAMES.indexOf(friend.name)].id};boutique?.styleFriend(friend.name,friend.outfit);}
       changeOutfit(G.clone(look.outfit));pose=look.pose??0;renderPoses();boutique?.setPose(pose); newTheme(look.themeId); switchView('studio'); toast('Your lovely look is back. Make it something new!');
     } else if (data.download) { const look = looks.find(l => l.id === data.download); if (look) downloadLook(look); }
     else if (data.delete) {
@@ -460,10 +497,10 @@
   $('.brand').addEventListener('click', event => { event.preventDefault(); switchView('studio'); });
   $('#theme-button').addEventListener('click', showThemes);
   $('#new-theme-button').addEventListener('click', () => { surpriseTheme(); toast(theme().hint); });
-  $('#shuffle-button').addEventListener('click', () => { changeOutfit(G.randomOutfit(outfit)); toast('A happy little surprise. Make it your own!'); });
+  $('#shuffle-button').addEventListener('click', () => { changeOutfit(G.randomOutfit(editingOutfit())); toast('A happy little surprise. Make it your own!'); });
   $('#pose-button').addEventListener('click', () => {$('#pose-picker').hidden=!$('#pose-picker').hidden;$('#pose-button').setAttribute('aria-expanded',String(!$('#pose-picker').hidden));if(!$('#pose-picker').hidden){if(!activityState)boutique?.setView('fit');renderPoses();}});
-  $('#undo-button').addEventListener('click', () => { if (!history.length) return; outfit = history.pop(); runwayDraft = null; renderAvatar(); renderWardrobe(); persist(); });
-  $('#fresh-start-button').addEventListener('click', () => confirm('A fresh little start?', 'This resets your outfit. Your skin tone and saved looks will stay just as they are. You can undo this too.', 'Start fresh', () => { const next = G.defaultOutfit(); next.skin = outfit.skin; changeOutfit(next); pose = 0; renderPoses();boutique?.setPose(0); renderAvatar(); resetTimer(); }));
+  $('#undo-button').addEventListener('click', () => { const undo=editingHistory();if(!undo.length)return;const previous=undo.pop();if(stylingName)friendStyles[stylingName].outfit=previous;else outfit=previous;runwayDraft=null;renderAvatar();renderWardrobe();persist(); });
+  $('#fresh-start-button').addEventListener('click', () => confirm('A fresh little start?', `This resets ${stylingName?stylingName+'’s':'your'} outfit. Skin tone and saved looks will stay just as they are. You can undo this too.`, 'Start fresh', () => { const next = stylingName?G.matchOutfit(G.defaultOutfit(),editingOutfit()):G.defaultOutfit(); next.skin = editingOutfit().skin; changeOutfit(next); pose = 0; renderPoses();boutique?.setPose(0); renderAvatar(); resetTimer(); }));
   $('#runway-button').addEventListener('click', showRunway);
   $('#back-to-style').addEventListener('click', () => closeDialog($('#runway-dialog')));
   $('#next-round').addEventListener('click', () => { closeDialog($('#runway-dialog')); surpriseTheme(); toast(`Your next chapter: ${theme().name}. Keep your look or dream up a new one!`); });
@@ -473,10 +510,17 @@
   $('#help-button').addEventListener('click', () => openDialog('#help-dialog'));
   $('#grownups-button').addEventListener('click', () => openDialog('#grownups-dialog'));
   $('#outing-button').addEventListener('click',showShoppingFriends);
+  $('#stylist-button').addEventListener('click',()=>showShoppingFriends(true));
+  $('#style-another').addEventListener('click',()=>showShoppingFriends(true));
+  $('#stylist-occasion').addEventListener('change',()=>{friendStyles[stylingName].occasion=$('#stylist-occasion').value;renderStylingRequest();collection=stylingRequest().collection;category='dresses';renderWardrobe(true);persist();});
+  $('#finish-styling').addEventListener('click',()=>{const name=stylingName;stopStyling();toast(`${name}: “I love the look you made! Let’s show everyone!”`);});
+  $('#match-player').addEventListener('click',()=>{if(stylingName){changeOutfit(G.matchOutfit(outfit,editingOutfit()));toast('Matching outfits! Each of you keeps your own hair and makeup.');}});
+  $('#styled-runway').addEventListener('click',()=>showRunway(true));
+  $('#friends-runway').addEventListener('click',()=>{closeDialog($('#friends-dialog'));showRunway(true);});
   $('#quiet-shopping').addEventListener('click',()=>{boutique?.dismissCompanion();closeDialog($('#friends-dialog'));});
   $('#dismiss-friend').addEventListener('click',()=>{boutique?.dismissCompanion();toast('See you around the mall!');});
   $('#suggest-button').addEventListener('click',()=>{suggestion=boutique?.suggest(themeId);$('#try-suggestion').hidden=!suggestion;if(suggestion)$('#try-suggestion').textContent=`Try ${G.byId[suggestion.id].name}`;});
-  $('#try-suggestion').addEventListener('click',()=>{if(suggestion){selectedId=suggestion.id;category=G.byId[selectedId].category;collection=G.byId[selectedId].collection||'';changeOutfit(G.wear(outfit,selectedId));toast('A lovely idea from your shopping friend!');}});
+  $('#try-suggestion').addEventListener('click',()=>{if(suggestion){selectedId=suggestion.id;category=G.byId[selectedId].category;collection=G.byId[selectedId].collection||'';changeOutfit(G.wear(editingOutfit(),selectedId));toast('A lovely idea from your shopping friend!');}});
   $('#leave-activity').addEventListener('click',()=>{boutique?.leaveActivity();boutique?.canvas.focus({preventScroll:true});});
   $('#apply-paint').addEventListener('click',()=>applyPaint());$('#wash-paint').addEventListener('click',()=>applyPaint(true));
   $('#photo-pose').addEventListener('change',()=>{photoDraft.pose=Number($('#photo-pose').value);renderPhotoBase();});
@@ -515,7 +559,7 @@
     try {
       boutique = new window.Style3D.Boutique($('#avatar'), {
         catalog: G.byId,game:G,
-        onCompanion:companionChanged,onActivity:activityChanged,onPaint:applyPaint,
+        onCompanion:companionChanged,onActivity:activityChanged,onPaint:applyPaint,onStyleExit:()=>stopStyling(false),
         onGrab(id,event){beginDrag(id,event,true);},onDrag:moveDrag,onDrop:endDrag,
         onHover(id){const hint=$('#rack-hover');hint.hidden=!id||!!dragState;if(id)hint.textContent=`Drag ${G.byId[id].name} onto your character`;},
         onStation(station,{browse=false}={}) {
@@ -543,6 +587,7 @@
           $('#scene').classList.toggle('fitting-view', mode !== 'walk');$('#rack-hover').hidden=true;
         }
       });
+      for(const [name,style]of Object.entries(friendStyles))boutique.styleFriend(name,style.outfit);
       $('#explore-button').addEventListener('click', () => { boutique.setView('walk'); boutique.canvas.focus({ preventScroll: true }); });
       $('#outfit-view-button').addEventListener('click', () => boutique.setView('fit'));
       $('#face-view-button').addEventListener('click', () => boutique.setView('face'));

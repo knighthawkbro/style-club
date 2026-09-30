@@ -1,13 +1,13 @@
 {
   "name": "style-club",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "private": true,
   "description": "An original, offline-friendly dress-up and runway game.",
   "scripts": {
     "start": "node server.js",
     "build": "node build.mjs",
-    "test": "node --test tests/game.test.js tests/3d.test.mjs tests/server.test.js tests/assets.test.mjs tests/activities.test.mjs",
-    "check": "node --check app.js && node --check game.js && node --check art.js && node --check server.js && node --check src/model3d.mjs && node --check src/scene3d.mjs && node --check src/world-rules.mjs && node --check src/shoppers.mjs && node --check src/motion.mjs && node --check src/mall.mjs && node --check src/audience.mjs && node --check src/friend-talk.mjs && node --check src/shop-displays.mjs && node --check src/activity-spots.mjs && node --check src/photo-booth.mjs && node --check version-assets.mjs && node --check build.mjs"
+    "test": "node --test tests/game.test.js tests/3d.test.mjs tests/server.test.js tests/assets.test.mjs tests/activities.test.mjs tests/stylist.test.mjs",
+    "check": "node --check app.js && node --check game.js && node --check art.js && node --check server.js && node --check src/model3d.mjs && node --check src/scene3d.mjs && node --check src/world-rules.mjs && node --check src/shoppers.mjs && node --check src/motion.mjs && node --check src/interactions.mjs && node --check src/mall.mjs && node --check src/audience.mjs && node --check src/friend-talk.mjs && node --check src/shop-displays.mjs && node --check src/activity-spots.mjs && node --check src/photo-booth.mjs && node --check version-assets.mjs && node --check build.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

@@ -6,6 +6,7 @@ import { ShopperBrain } from './shoppers.mjs';
 import { buildMall } from './mall.mjs';
 import { makeAudience } from './audience.mjs';
 import { outfitNotice, friendlyGreeting, outfitSuggestion } from './friend-talk.mjs';
+import { SeatMotion, ACTION_DURATION } from './interactions.mjs';
 export { STATIONS, STORES, ACTIVITIES };
 export { photo, stickerImage } from './photo-booth.mjs';
 
@@ -46,11 +47,12 @@ function lightScene(scene){
 }
 
 export class Boutique {
-  constructor(container,{catalog,game,onStation=()=>{},onNearby=()=>{},onView=()=>{},onLocation=()=>{},onFriend=()=>{},onBubble=()=>{},onTogether=()=>{},onCompanion=()=>{},onActivity=()=>{},onPaint=()=>{},onGrab=()=>{},onDrag=()=>{},onDrop=()=>{},onHover=()=>{}}={}){
+  constructor(container,{catalog,game,onStation=()=>{},onNearby=()=>{},onView=()=>{},onLocation=()=>{},onFriend=()=>{},onBubble=()=>{},onTogether=()=>{},onCompanion=()=>{},onActivity=()=>{},onPaint=()=>{},onStyleExit=()=>{},onGrab=()=>{},onDrag=()=>{},onDrop=()=>{},onHover=()=>{}}={}){
     this.container=container;this.catalog=catalog;this.onStation=onStation;this.onNearby=onNearby;this.onView=onView;
     this.onGrab=onGrab;this.onDrag=onDrag;this.onDrop=onDrop;this.onHover=onHover;this.onLocation=onLocation;
     this.game=game;this.onFriend=onFriend;this.onBubble=onBubble;this.onTogether=onTogether;this.nextChatAt=9;this.chatCount=0;
     this.onCompanion=onCompanion;this.onActivity=onActivity;this.onPaint=onPaint;this.activity=null;this.activityGoal=null;this.companion=null;this.mirrorRevision=0;
+    this.onStyleExit=onStyleExit;this.stylingFriend=null;this.seatMotion=new SeatMotion();this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.renderer=setupRenderer(container);this.canvas=this.renderer.domElement;
     this.canvas.setAttribute('aria-label','3D fashion mall. Drag a piece from a rack onto your character to wear it. Use WASD or arrow keys to walk, E to browse, and drag the floor to look around.');
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#eedfe5');this.scene.fog=new THREE.Fog('#eedfe5',25,49);
@@ -61,7 +63,7 @@ export class Boutique {
       const brain=new ShopperBrain(game,i),anchor=new THREE.Group();anchor.scale.setScalar(.88);this.shoppers.add(anchor);
       anchor.userData.shopperIndex=i;
       label(anchor,brain.name,[0,3.82,0],'#865e77',1.12);
-      const npc={brain,anchor,character:null};this.npcs.push(npc);this.dressShopper(npc);
+      const npc={brain,anchor,character:null,seatMotion:new SeatMotion()};this.npcs.push(npc);this.dressShopper(npc);
     }
     this.fittingStage=new THREE.Group();this.scene.add(this.fittingStage);this.fittingStage.visible=false;
     cylinder(this.fittingStage,1.10,.10,cream,[0,.05,0]);cylinder(this.fittingStage,1.12,.035,gold,[0,.035,0]);
@@ -71,14 +73,19 @@ export class Boutique {
     this.camera.position.set(3,6,12);this.target=new THREE.Vector3(0,1.5,3.6);this.abort=new AbortController();
     this.bind();this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(container);this.resize();this.loop();
   }
-  setOutfit(outfit){const notice=this.game&&outfitNotice(this.outfit,outfit,this.game);if(notice&&this.friendsVisible)this.pendingNotice={text:notice,created:this.elapsed};this.character?.dispose();this.character=buildCharacter(outfit,this.catalog);this.character.pose(this.elapsed,this.poseStyle);this.anchor.add(this.character.root);this.outfit=outfit;this.canvas.dataset.outfit=JSON.stringify(outfit);this.refreshMirror();this.draw(0);}
+  showCharacter(outfit){this.character?.dispose();this.character=buildCharacter(outfit,this.catalog);this.character.pose(this.elapsed,this.poseStyle);this.anchor.add(this.character.root);this.canvas.dataset.outfit=JSON.stringify(outfit);this.draw(0);}
+  setOutfit(outfit){const notice=this.game&&outfitNotice(this.outfit,outfit,this.game);if(notice&&this.friendsVisible)this.pendingNotice={text:notice,created:this.elapsed};this.outfit=outfit;if(!this.stylingFriend)this.showCharacter(outfit);this.refreshMirror();}
+  editFriend(name){this.stylingFriend=this.npcs.find(n=>n.brain.name===name)||null;this.canvas.dataset.styling=name||'';this.action=null;if(this.stylingFriend){this.setView('fit');this.seatMotion=new SeatMotion();this.showCharacter(this.stylingFriend.brain.outfit);}else if(this.outfit)this.showCharacter(this.outfit);}
+  styleFriend(name,outfit){const npc=this.npcs.find(n=>n.brain.name===name);if(!npc)return;npc.brain.style(outfit);this.dressShopper(npc);if(this.stylingFriend===npc)this.showCharacter(npc.brain.outfit);this.canvas.dataset.friendOutfits=JSON.stringify(this.friendLooks());}
+  performAction(kind,options={}){if(this.reduced||!ACTION_DURATION[kind])return;this.action={...options,kind,started:this.elapsed};}
+  actionFrame(){if(!this.action)return null;const progress=(this.elapsed-this.action.started)/ACTION_DURATION[this.action.kind];if(progress>=1){this.action=null;return null;}return{...this.action,progress};}
   setTheme(theme){this.environment.wall.color.set(theme.bg);}
   setActive(active){this.active=active;if(!active){this.keys.clear();this.virtual.clear();this.path=[];this.destinationStation=null;}else this.resize();}
   setPose(pose){this.poseStyle=pose;this.canvas.dataset.pose=String(pose);if(this.activity)this.refreshMirror();else this.setView('fit');}
-  setView(mode){this.leaveActivity();const changed=this.view!==mode;this.view=mode;this.canvas.dataset.view=mode;this.path=[];this.destinationStation=null;this.cameraGoal=null;this.faceShop=false;this.keys.clear();this.virtual.clear();if(changed){this.pitch=mode==='face'?.025:mode==='fit'?.16:.43;if(mode!=='walk')this.yaw=this.cameraYaw;}this.onView(mode);}
+  setView(mode){if(mode==='walk'&&this.stylingFriend)this.onStyleExit();this.leaveActivity();const changed=this.view!==mode;this.view=mode;this.canvas.dataset.view=mode;this.path=[];this.destinationStation=null;this.cameraGoal=null;this.faceShop=false;this.keys.clear();this.virtual.clear();if(changed){this.pitch=mode==='face'?.025:mode==='fit'?.16:.43;if(mode!=='walk')this.yaw=this.cameraYaw;}this.onView(mode);}
   resetCamera(){const mode=this.view==='face'?'face':'fit';this.setView(mode);this.cameraYaw=.18;this.pitch=mode==='face'?.025:.16;this.yaw=.18;}
   turn(amount){this.setView(this.view==='face'?'face':'fit');this.cameraYaw+=amount;}
-  setMove(direction,pressed){if(pressed){this.leaveActivity();this.virtual.add(direction);if(this.view!=='walk'){this.view='walk';this.pitch=.43;this.onView('walk');}}else this.virtual.delete(direction);}
+  setMove(direction,pressed){if(pressed){if(this.view!=='walk')this.setView('walk');this.leaveActivity();this.virtual.add(direction);}else this.virtual.delete(direction);}
   interact(){if(this.nearby?.kind)this.startActivity(this.nearby.id);else if(this.nearby)this.onStation(this.nearby,{browse:true});}
   startActivity(id){
     if(id==='bench')id=ACTIVITIES.filter(a=>a.kind==='bench').sort((a,b)=>Math.abs(a.z-this.position.z)-Math.abs(b.z-this.position.z))[0].id;
@@ -91,13 +98,13 @@ export class Boutique {
   enterActivity(activity){
     this.activityGoal=null;this.path=[];this.destinationStation=null;this.keys.clear();this.virtual.clear();
     if(activity.kind==='photo'){this.onActivity(activity);return;}
-    this.activity=activity;this.yaw=activity.yaw;this.cameraYaw=activity.yaw+(activity.kind==='bench'?.4:1.05);this.pitch=.16;this.faceShop=false;this.cameraGoal=null;
+    this.activity=activity;if(activity.seat)this.seatMotion.set(activity.seat,this.position,this.yaw,this.reduced);this.yaw=activity.yaw;this.cameraYaw=activity.yaw+(activity.kind==='bench'?.4:1.05);this.pitch=.16;this.faceShop=false;this.cameraGoal=null;
     if(activity.friendSeat)this.companion?.brain.sitWith(activity.friendSeat);
     this.canvas.dataset.activity=activity.id;this.onActivity(activity);this.refreshMirror();
   }
   leaveActivity(){
     this.activityGoal=null;if(!this.activity)return;
-    this.activity=null;this.companion?.brain.stand();this.pitch=.43;this.onActivity(null);this.canvas.dataset.activity='';
+    this.seatMotion.set(null,this.position,this.yaw,this.reduced);this.activity=null;this.companion?.brain.stand();this.pitch=.43;this.onActivity(null);this.canvas.dataset.activity='';
   }
   refreshMirror(){
     const mirror=this.environment?.mirrors.find(m=>m.id===this.activity?.id);if(!mirror||!this.outfit)return;
@@ -167,7 +174,7 @@ export class Boutique {
       if(document.activeElement!==canvas&&document.activeElement!==document.body)return;
       const key=event.key.toLowerCase();
       if(this.dragging){if(key==='escape')this.onDrop(null,true);return;}
-      if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(key)){event.preventDefault();this.leaveActivity();this.keys.add(key);if(this.view!=='walk'){this.view='walk';this.pitch=.43;this.onView('walk');}this.path=[];}
+      if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(key)){event.preventDefault();if(this.view!=='walk')this.setView('walk');this.leaveActivity();this.keys.add(key);this.path=[];}
       if(key==='e'){event.preventDefault();this.interact();}
       if(key==='f'){event.preventDefault();this.greet();}
       if(key==='escape'&&this.activity){event.preventDefault();this.leaveActivity();}
@@ -186,7 +193,7 @@ export class Boutique {
       if(!pointer){const item=this.itemAt(event);this.canvas.style.cursor=item?'grab':'move';this.onHover(item?.userData.itemId||null,event);return;}
       const dx=event.clientX-pointer.x,dy=event.clientY-pointer.y;pointer.moved ||= Math.hypot(event.clientX-pointer.startX,event.clientY-pointer.startY)>6;
       if(pointer.moved){
-        if(pointer.item){if(!pointer.started){pointer.started=true;this.setDressDrag(true,pointer.item);this.onGrab(pointer.item.userData.itemId,event);}if(this.dragging)this.onDrag(event);}
+        if(pointer.item){if(!pointer.started){pointer.started=true;this.setDressDrag(true,pointer.item);this.performAction('reach');this.onGrab(pointer.item.userData.itemId,event);}if(this.dragging)this.onDrag(event);}
         else{this.cameraGoal=null;this.cameraYaw-=dx*.009;this.pitch=THREE.MathUtils.clamp(this.pitch+dy*.004,.025,.85);}
       }
       pointer.x=event.clientX;pointer.y=event.clientY;
@@ -213,6 +220,7 @@ export class Boutique {
     this.canvas.dataset.destination=station?.id||'floor';
   }
   walk(dt){
+    if(['blockheel','sparkleheel'].includes(this.catalog[this.outfit?.shoes?.id]?.shape))dt*=.85;
     const all=new Set([...this.keys,...this.virtual]);
     let x=Number(all.has('d')||all.has('arrowright')||all.has('right'))-Number(all.has('a')||all.has('arrowleft')||all.has('left'));
     let z=Number(all.has('s')||all.has('arrowdown')||all.has('down'))-Number(all.has('w')||all.has('arrowup')||all.has('up'));
@@ -230,24 +238,26 @@ export class Boutique {
     this.canvas.dataset.position=`${next.x.toFixed(2)},${next.z.toFixed(2)}`;this.canvas.dataset.moving=String(distance>.0001);return distance;
   }
   draw(dt){
-    const travelled=this.view==='walk'&&!this.dragging&&!this.activity?this.walk(dt):0,time=this.elapsed;
+    const travelled=this.view==='walk'&&!this.dragging&&!this.activity&&!this.seatMotion.busy?this.walk(dt):0,time=this.elapsed;
+    if(travelled)this.action=null;const action=this.actionFrame();this.canvas.dataset.action=action?.kind||'';
     if(this.cameraGoal!=null)this.cameraYaw+=Math.atan2(Math.sin(this.cameraGoal-this.cameraYaw),Math.cos(this.cameraGoal-this.cameraYaw))*(1-Math.exp(-dt*4));
     if(this.faceShop&&!travelled)this.yaw+=Math.atan2(Math.sin(this.cameraYaw-this.yaw),Math.cos(this.cameraYaw-this.yaw))*(1-Math.exp(-dt*5));
-    const seat=this.activity?.seat,position=seat||this.position;
-    if(this.character){this.anchor.position.set(position.x,seat?0:this.view==='walk'?-.04:.08,position.z);this.anchor.rotation.y=this.yaw;this.character.animate(time,this.poseStyle,{distance:travelled,dt,seatHeight:seat?.height??null});}
-    const distance=this.activity?.kind==='beauty'?2.65:this.activity?.kind==='bench'?3.9:this.activity?4.1:this.view==='face'?2.20:this.view==='fit'?5.35:9.7,height=seat?(this.activity.kind==='beauty'?2.13:1.45):this.view==='face'?2.88:this.view==='fit'?1.78:1.55;
+    const seat=this.activity?.seat,position=this.seatMotion.update(dt,this.position,this.yaw);
+    if(this.character){this.anchor.position.set(position.x,position.blend?0:this.view==='walk'?-.04:.08,position.z);this.anchor.rotation.y=position.yaw;this.character.animate(time,this.poseStyle,{distance:travelled,dt,seatHeight:position.blend?position.height:null,seatBlend:position.blend,action});}
+    this.canvas.dataset.seatBlend=position.blend.toFixed(3);
+    const distance=this.activity?.kind==='beauty'?2.65:this.activity?.kind==='bench'?3.9:this.activity?4.1:this.view==='face'?2.20:this.view==='fit'?6.1:9.7,height=seat?(this.activity.kind==='beauty'?2.13:1.45):this.view==='face'?2.88:this.view==='fit'?1.92:1.55;
     this.target.set(position.x,height,position.z);
     const desired=new THREE.Vector3(position.x+Math.sin(this.cameraYaw)*distance*Math.cos(this.pitch),height+Math.sin(this.pitch)*distance,position.z+Math.cos(this.cameraYaw)*distance*Math.cos(this.pitch));
     this.camera.position.lerp(desired,dt?1-Math.exp(-dt*7):1);this.camera.lookAt(this.target);
     this.environment.room.visible=this.view==='walk';this.fittingStage.visible=this.view!=='walk';this.fittingStage.position.set(this.position.x,0,this.position.z);
     this.shoppers.visible=this.view==='walk'&&this.friendsVisible;
     for(const npc of this.npcs){
-      const result=this.shoppers.visible&&!this.dragging?npc.brain.tick(dt,{x:position.x,z:position.z,yaw:this.yaw},this.npcs.filter(other=>other!==npc).map(other=>other.brain.position)):{walking:false,pose:0};
+      const result=this.shoppers.visible&&!this.dragging&&!npc.seatMotion.busy?npc.brain.tick(dt,{x:position.x,z:position.z,yaw:this.yaw},this.npcs.filter(other=>other!==npc).map(other=>other.brain.position)):{walking:false,pose:0};
       if(result.changed)this.dressShopper(npc);
-      const npcSeat=npc.brain.seat,npcPosition=npcSeat||npc.brain.position;
+      const npcSeat=npc.brain.seat;npc.seatMotion.set(npcSeat,npc.brain.position,npc.brain.yaw,this.reduced);const npcPosition=npc.seatMotion.update(dt,npc.brain.position,npc.brain.yaw);
       // Give the seated player room in the close-up while shoppers keep browsing.
       npc.anchor.visible=!(this.activity&&npc!==this.companion&&Math.hypot(npcPosition.x-position.x,npcPosition.z-position.z)<4.5);
-      npc.anchor.position.set(npcPosition.x,npcSeat?0:-.04,npcPosition.z);npc.anchor.rotation.y=npcSeat?.yaw??npc.brain.yaw;npc.character.animate(time+this.npcs.indexOf(npc),result.pose,{distance:result.distance||0,dt,seatHeight:npcSeat?npcSeat.height/.88:null});
+      npc.anchor.position.set(npcPosition.x,npcPosition.blend?0:-.04,npcPosition.z);npc.anchor.rotation.y=npcPosition.yaw;npc.character.animate(time+this.npcs.indexOf(npc),result.pose,{distance:result.distance||0,dt,seatHeight:npcPosition.blend?npcPosition.height/.88:null,seatBlend:npcPosition.blend});
     }
     if(!this.lastNpcReport||time-this.lastNpcReport>.5){this.canvas.dataset.shoppers=JSON.stringify(this.npcs.map(({brain})=>({name:brain.name,activity:brain.description(),x:+brain.position.x.toFixed(2),z:+brain.position.z.toFixed(2),changes:brain.changes})));this.lastNpcReport=time;}
     this.environment.update(this.camera,this.position,time);
@@ -274,22 +284,26 @@ export class Runway {
   constructor(container,catalog){
     this.container=container;this.catalog=catalog;this.renderer=setupRenderer(container);this.renderer.domElement.tabIndex=-1;this.renderer.domElement.setAttribute('aria-label','Your character walking the 3D runway');
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#dec4d5');lightScene(this.scene);
-    const floor=box(this.scene,[9,.10,16],cream,[0,-.08,0]);floor.receiveShadow=true;box(this.scene,[2.1,.016,14],pink,[0,-.018,0]);
-    for(const side of[-1,1])for(let i=0;i<9;i++){cylinder(this.scene,.04,.75,gold,[side*1.8,.37,-i]);ball(this.scene,[.07,.07,.07],material('#fff4cf',{emissive:'#fff0bb',emissiveIntensity:.8}),[side*1.8,.8,-i]);}
+    const floor=box(this.scene,[11,.10,16],cream,[0,-.08,0]);floor.receiveShadow=true;this.carpet=box(this.scene,[2.1,.016,14],pink,[0,-.018,0]);
+    this.rails=[];for(const side of[-1,1]){const rail=new THREE.Group();rail.userData.side=side;this.scene.add(rail);this.rails.push(rail);for(let i=0;i<9;i++){cylinder(rail,.04,.75,gold,[0,.37,-i]);ball(rail,[.07,.07,.07],material('#fff4cf',{emissive:'#fff0bb',emissiveIntensity:.8}),[0,.8,-i]);}}
     this.camera=new THREE.PerspectiveCamera(43,1,.1,40);this.camera.position.set(.1,2.9,8.4);this.camera.lookAt(0,1.5,-.9);
     this.anchor=new THREE.Group();this.scene.add(this.anchor);this.active=false;this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;this.audience=makeAudience(this.scene,{label,reduced:this.reduced});this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(container);this.loop();
   }
-  resize(){const {width,height}=this.container.getBoundingClientRect();if(width<2||height<2)return;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;this.camera.updateProjectionMatrix();}
-  show(outfit,pose=1,friend=null){this.character?.dispose();this.friendCharacter?.dispose();this.friendCharacter=null;this.character=buildCharacter(outfit,this.catalog);this.anchor.add(this.character.root);this.anchor.position.x=friend?-.67:0;
-    if(friend){this.friendCharacter=buildCharacter(friend.outfit,this.catalog);this.friendAnchor ||= new THREE.Group();this.friendAnchor.position.x=.8;this.friendAnchor.scale.setScalar(.88);this.friendAnchor.add(this.friendCharacter.root);this.scene.add(this.friendAnchor);}
-    this.renderer.domElement.dataset.companion=friend?.name||'';this.poseStyle=pose;this.started=performance.now();this.lastTime=0;this.anchor.position.z=this.reduced?0:-3.2;this.active=true;this.renderer.domElement.dataset.audience=String(this.audience.people.length);this.resize();}
+  resize(){const {width,height}=this.container.getBoundingClientRect();if(width<2||height<2)return;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;const span=Math.max(3,(this.friends?.length||0)*1.35+2),z=Math.max(8.4,span/(2*Math.tan(43*Math.PI/360)*this.camera.aspect));this.camera.position.set(.1,2.9,z);this.camera.lookAt(0,1.5,-.9);this.camera.updateProjectionMatrix();}
+  show(outfit,pose=1,party=[]){
+    this.character?.dispose();for(const friend of this.friends||[]){friend.character.dispose();friend.anchor.removeFromParent();}
+    const friends=(Array.isArray(party)?party:party?[party]:[]).slice(0,3),count=friends.length+1;
+    this.character=buildCharacter(outfit,this.catalog);this.anchor.add(this.character.root);this.anchor.position.x=-(count-1)*.675;
+    this.friends=friends.map((friend,i)=>{const anchor=new THREE.Group(),character=buildCharacter(friend.outfit,this.catalog);anchor.position.x=(i+1-(count-1)/2)*1.35;anchor.scale.setScalar(.88);anchor.add(character.root);this.scene.add(anchor);return{anchor,character,name:friend.name};});
+    this.carpet.scale.x=count>2?2.65:1;for(const rail of this.rails)rail.position.x=rail.userData.side*(count>2?3.2:1.8);for(const person of this.audience.people)person.person.position.x=person.side*(count>2?4:2.9);
+    this.renderer.domElement.dataset.companion=friends.map(f=>f.name).join(', ');this.renderer.domElement.dataset.friends=JSON.stringify(friends);this.renderer.domElement.setAttribute('aria-label',`Your character on the runway${friends.length?' with '+friends.map(f=>f.name).join(', '):''}`);this.poseStyle=pose;this.started=performance.now();this.lastTime=0;this.anchor.position.z=this.reduced?0:-3.2;this.active=true;this.renderer.domElement.dataset.audience=String(this.audience.people.length);this.resize();}
   hide(){this.active=false;}
   loop(){this.frame=requestAnimationFrame(()=>this.loop());if(!this.active||document.hidden)return;const elapsed=(performance.now()-this.started)/1000,dt=Math.min(.05,elapsed-this.lastTime);this.lastTime=elapsed;
     const progress=this.reduced?1:Math.min(1,elapsed/3.5),eased=progress<.85?progress:(.85+(progress-.85)-((progress-.85)**2)/.3),end=.925;
     const z=-3.2+3.2*Math.min(1,eased/end),distance=Math.abs(z-this.anchor.position.z);this.anchor.position.z=z;
     this.anchor.rotation.y=progress<1||this.reduced?0:Math.sin((elapsed-3.5)*.4)*.14;
     this.character?.animate(elapsed,this.poseStyle,{distance:Math.min(distance,.1),dt,strut:true});
-    if(this.friendCharacter){this.friendAnchor.position.z=z-.22;this.friendAnchor.rotation.y=this.anchor.rotation.y;this.friendCharacter.animate(elapsed,this.poseStyle,{distance:Math.min(distance,.1),dt,strut:true});}
+    for(const [i,friend]of(this.friends||[]).entries()){friend.anchor.position.z=z-.18-(i%2)*.13;friend.anchor.rotation.y=this.anchor.rotation.y;friend.character.animate(elapsed+i*.12,this.poseStyle,{distance:Math.min(distance,.1),dt,strut:true});}
     this.audience.update(elapsed,z);this.renderer.render(this.scene,this.camera);
   }
 }

@@ -250,4 +250,16 @@ main { max-width: 1510px; padding-top: 28px; }
 .backup-actions { display:flex; flex-wrap:wrap; gap:10px; margin:-10px 0 25px; }
 .backup-actions button { font-size:11px; }
 .graphics-fallback .activity-shortcuts { display:none; }
+.styling-label { position:absolute; top:67px; right:14px; padding:12px 17px; background:#8c607c; color:#fff9ec; border-radius:18px; font-size:13px; box-shadow:0 4px 12px #68455922; }
+.stylist-panel { background:#f2e8f4; }
+.stylist-panel label { display:block; margin:12px 0 6px; font-size:11px; }
+.stylist-panel select { width:100%; border:1px solid #d2b6ca; padding:10px; border-radius:9px; background:#fffaf2; color:#79516e; font:12px var(--sans); }
+.stylist-panel .stylist-hint { font-size:10px; }
+.stylist-actions { display:flex; flex-wrap:wrap; gap:7px; }
+.stylist-actions button { flex:1 1 40%; padding:11px 8px; border-radius:9px; border:1px solid #d9bfd1; background:#fff9ed; color:#825871; font-size:11px; }
+.stylist-actions button:last-child { flex-basis:100%; background:#956781; color:#fff9ef; }
+.friend-choice small { display:block; margin:-4px 0 13px; font-size:10px; color:#88667b; }
+.friend-choice .style-friend-choice { margin-top:7px; background:#fff8eb; color:#885571; border:1px solid #d1adc3; }
+#friends-runway { width:100%; font-size:12px; margin-bottom:12px; }
+.runway-company { padding:10px; border-radius:12px; background:#efe1ee; color:#895e78; font-size:12px; }
 @media(max-width:700px){.photo-dialog{padding:23px 17px;}.photo-layout{grid-template-columns:1fr;gap:20px;}.photo-heading h2{font-size:27px;}.photo-preview{max-width:430px;margin:auto;}.companion-card{top:59px;right:9px;width:132px;padding:8px;}.companion-card strong{font-size:10px;}.activity-shortcuts button{font-size:10px;}.friend-picker{gap:7px;}.friend-choice img{height:125px;}.friend-choice strong{font-size:18px;}}

@@ -2,17 +2,18 @@ const TAU=Math.PI*2;
 const mix=(a,b,t)=>a+(b-a)*t;
 const blend=(a,b,t)=>a.map((value,index)=>mix(value,b[index],t));
 export const STRIDE_LENGTH=1.65;
+export const HEEL_STRIDE_LENGTH=1.18;
 
 // During the stance part of a step, the foot moves backwards by exactly the
 // distance travelled by the body. The swing returns it in a smooth raised arc.
-export function footStep(phase){
-  const cycle=((phase/TAU)%1+1)%1,stance=.62,reach=STRIDE_LENGTH*stance;
-  if(cycle<stance)return{z:reach/2-STRIDE_LENGTH*cycle,lift:0,pitch:0};
+export function footStep(phase,heels=false){
+  const cycle=((phase/TAU)%1+1)%1,stance=heels?.66:.62,stride=heels?HEEL_STRIDE_LENGTH:STRIDE_LENGTH,reach=stride*stance;
+  if(cycle<stance)return{z:reach/2-stride*cycle,lift:0,pitch:0};
   const swing=(cycle-stance)/(1-stance),ease=swing*swing*(3-2*swing);
-  return{z:-reach/2+reach*ease,lift:Math.sin(Math.PI*swing)*.145,pitch:-Math.sin(Math.PI*swing)*.16};
+  return{z:-reach/2+reach*ease,lift:Math.sin(Math.PI*swing)*(heels?.095:.145),pitch:-Math.sin(Math.PI*swing)*(heels?.065:.16)};
 }
 
-export function poseFrame(time=0,style=0,phase=0,walkWeight=0,strut=false){
+export function poseFrame(time=0,style=0,phase=0,walkWeight=0,strut=false,heels=false){
   const f={position:[0,-.035,0],rotation:[0,0,0],torso:[0,0,0],head:[0,0,0],
     hands:[[-.49,1.27,.05],[.49,1.27,.05]],
     feet:[[-.155,0,0,0],[.155,0,0,0]]};
@@ -34,10 +35,11 @@ export function poseFrame(time=0,style=0,phase=0,walkWeight=0,strut=false){
   if(style===15){f.rotation[1]=-.20;f.hands=[hip(-1),[.75,2.97,.07]];f.torso=[-.02,.24,-.075];f.head=[-.06,-.08,-.045];f.feet=[[-.15,0,-.13,0],[.07,0,.33,0]];}
   if(!walkWeight)return f;
   const gait={position:[Math.sin(phase)*.018,-.120+(1-Math.cos(phase*2))*.006,0],rotation:[0,0,0],torso:[.018,-Math.sin(phase)*.055,Math.sin(phase)*.022],head:[0,Math.sin(phase)*.035,-Math.sin(phase)*.013],hands:[],feet:[]};
+  if(heels){gait.position=[Math.sin(phase)*.026,-.073+(1-Math.cos(phase*2))*.004,0];gait.torso=[-.012,-Math.sin(phase)*.075,Math.sin(phase)*.026];}
   for(let i=0;i<2;i++){
-    const side=i?1:-1,step=footStep(phase+i*Math.PI);
-    gait.feet.push([side*(strut?.11:.155),step.lift,step.z,step.pitch]);
-    gait.hands.push([side*.48,1.29+Math.sin(phase+i*Math.PI)*.016,-Math.cos(phase+i*Math.PI)*.24+.06]);
+    const side=i?1:-1,step=footStep(phase+i*Math.PI,heels);
+    gait.feet.push([side*(heels?.115:strut?.11:.155),step.lift,step.z,step.pitch]);
+    gait.hands.push([side*.48,heels?1.38:1.29+Math.sin(phase+i*Math.PI)*.016,-Math.cos(phase+i*Math.PI)*(heels?.14:.24)+.06]);
   }
   for(const key of ['position','torso','head'])f[key]=blend(f[key],gait[key],walkWeight);
   f.rotation=f.rotation.map((angle,i)=>angle+Math.atan2(Math.sin(gait.rotation[i]-angle),Math.cos(gait.rotation[i]-angle))*walkWeight);

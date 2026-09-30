@@ -264,6 +264,28 @@
     for (const slot of ['head', 'bag', 'neck', 'back', 'ears', 'wrist', 'pet']) result.extras[slot] = safePiece(raw.extras?.[slot], 'extras', slot);
     return result;
   }
+  const FRIEND_NAMES=['Poppy','Nova','Jules'];
+  const STYLING_REQUESTS=[
+    {id:'halloween',name:'Halloween party',icon:'🎃',collection:'halloween',copy:'Will you help me choose a costume for the Halloween party? A hat or a little pet could come too!'},
+    {id:'concert',name:'Pop-star concert',icon:'✦',collection:'',copy:'I’m off to a concert! Can you make me a look for singing and dancing? I’d love to match with you.'},
+    {id:'garden',name:'Garden picnic',icon:'✿',collection:'',copy:'Let’s dress up for a picnic with our friends. Flowers, favorite colors, or your own idea — you choose!'}
+  ];
+  function matchOutfit(source,target){
+    const result=sanitizeOutfit(target),clothes=sanitizeOutfit(source);
+    for(const key of ['dress','top','bottom','shoes','extras'])result[key]=clone(clothes[key]);
+    return result;
+  }
+  function sanitizeFriends(raw){
+    const seen=new Set();
+    return (Array.isArray(raw)?raw:[]).filter(f=>f&&FRIEND_NAMES.includes(f.name)&&f.outfit&&!seen.has(f.name)&&(seen.add(f.name),true)).map(f=>({name:f.name,outfit:sanitizeOutfit(f.outfit)}));
+  }
+  function sanitizeFriendStyles(raw){
+    const result={};
+    for(const [i,name]of FRIEND_NAMES.entries())if(raw&&Object.hasOwn(raw,name)&&raw[name]?.outfit){
+      result[name]={outfit:sanitizeOutfit(raw[name].outfit),occasion:STYLING_REQUESTS.some(r=>r.id===raw[name].occasion)?raw[name].occasion:STYLING_REQUESTS[i].id};
+    }
+    return result;
+  }
   const PHOTO_BACKGROUNDS = [
     {id:'rose',name:'Rose garden',icon:'✿',color:'#efd1db'},
     {id:'stars',name:'Starlight',icon:'✦',color:'#53486f'},
@@ -279,11 +301,7 @@
   function sanitizePhoto(raw){
     if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;
     const clamp=(value,fallback,min,max)=>Number.isFinite(value)?Math.min(max,Math.max(min,value)):fallback;
-    const names=new Set(),friends=[];
-    if(Array.isArray(raw.friends))for(const friend of raw.friends){
-      if(!friend||!['Poppy','Nova','Jules'].includes(friend.name)||names.has(friend.name)||!friend.outfit)continue;
-      names.add(friend.name);friends.push({name:friend.name,outfit:sanitizeOutfit(friend.outfit)});
-    }
+    const friends=sanitizeFriends(raw.friends);
     return {background:PHOTO_BACKGROUNDS.some(b=>b.id===raw.background)?raw.background:'rose',friends,
       stickers:(Array.isArray(raw.stickers)?raw.stickers:[]).filter(s=>s&&PHOTO_STICKERS.some(p=>p.id===s.id)).slice(0,12).map(s=>({id:s.id,x:clamp(s.x,.5,.04,.96),y:clamp(s.y,.5,.04,.96),size:clamp(s.size,.085,.05,.16)}))};
   }
@@ -293,20 +311,21 @@
     return raw.filter(look => {
       if (!look || typeof look.id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(look.id) || seen.has(look.id) || !look.outfit) return false;
       seen.add(look.id); return true;
-    }).slice(0, 40).map(look => ({ id: look.id, name: typeof look.name === 'string' ? look.name.slice(0, 40) : 'My lovely look', themeId: THEMES.some(t => t.id === look.themeId) ? look.themeId : THEMES[0].id, outfit: sanitizeOutfit(look.outfit), pose:Number.isInteger(look.pose)&&look.pose>=0&&look.pose<POSES.length?look.pose:1, date: typeof look.date === 'string' && !Number.isNaN(Date.parse(look.date)) ? look.date : new Date(0).toISOString(),...(look.photo?{photo:sanitizePhoto(look.photo)}:{}) }));
+    }).slice(0, 40).map(look => ({ id: look.id, name: typeof look.name === 'string' ? look.name.slice(0, 40) : 'My lovely look', themeId: THEMES.some(t => t.id === look.themeId) ? look.themeId : THEMES[0].id, outfit: sanitizeOutfit(look.outfit), pose:Number.isInteger(look.pose)&&look.pose>=0&&look.pose<POSES.length?look.pose:1, date: typeof look.date === 'string' && !Number.isNaN(Date.parse(look.date)) ? look.date : new Date(0).toISOString(),...(look.photo?{photo:sanitizePhoto(look.photo)}:{}),...(Array.isArray(look.friends)?{friends:sanitizeFriends(look.friends)}:{}) }));
   }
   function remainingSeconds(deadline, now) { return Math.max(0, Math.ceil((deadline - now) / 1000)); }
-  function readBackup(text){
+  function readBackupData(text){
     if(typeof text!=='string'||text.length>1000000)throw new Error('Choose a Style Club backup smaller than 1 MB.');
     let raw;try{raw=JSON.parse(text);}catch{throw new Error('That file could not be read. Choose a Style Club backup (.json).');}
     if(raw?.format!=='style-club-lookbook'||raw.version!==1||!Array.isArray(raw.looks))throw new Error('That is not a supported Style Club lookbook backup.');
-    return sanitizeLooks(raw.looks);
+    return {looks:sanitizeLooks(raw.looks),friendStyles:sanitizeFriendStyles(raw.friendStyles)};
   }
+  function readBackup(text){return readBackupData(text).looks;}
   function mergeLooks(existing,incoming){
     const current=sanitizeLooks(existing),known=new Set(current.map(l=>l.id));
     const additions=sanitizeLooks(incoming).filter(l=>!known.has(l.id));
     if(current.length+additions.length>40)throw new Error('Your lookbook has room for 40 looks. Keep a backup, then remove a few looks before restoring this file.');
     return{looks:[...additions,...current],added:additions.length};
   }
-  return { COLORS, HAIR_COLORS, SKIN_TONES, CATEGORIES, ITEMS, POSES, THEMES, PHOTO_BACKGROUNDS, PHOTO_STICKERS, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, sanitizePhoto, readBackup, mergeLooks, remainingSeconds };
+  return { COLORS, HAIR_COLORS, SKIN_TONES, CATEGORIES, ITEMS, POSES, THEMES, PHOTO_BACKGROUNDS, PHOTO_STICKERS, FRIEND_NAMES, STYLING_REQUESTS, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, sanitizePhoto, sanitizeFriends, sanitizeFriendStyles, matchOutfit, readBackupData, readBackup, mergeLooks, remainingSeconds };
 });

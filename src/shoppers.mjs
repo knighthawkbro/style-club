@@ -17,6 +17,8 @@ export class ShopperBrain {
     this.phase='posing';this.remaining=.3+index*.7;this.routeIndex=-1;this.path=[];this.changes=0;this.visits=0;this.blocked=0;this.pose=0;
   }
   invite(){this.following=true;this.seat=null;this.seatGoal=null;this.phase='following';this.path=[];this.repath=0;this.blocked=0;}
+  style(outfit){this.outfit=this.game.sanitizeOutfit(outfit);this.styled=true;}
+  resumeShopping(){this.styled=false;}
   dismiss(){this.following=false;this.seat=null;this.seatGoal=null;this.path=[];this.phase='posing';this.remaining=.3;}
   sitWith(seat){
     if(!this.following)return;
@@ -60,6 +62,7 @@ export class ShopperBrain {
   }
   tryClothes() {
     if(this.station.id==='runway'){this.pose=8+(this.visits%8);return false;}
+    if(this.styled){this.pose=8+(this.visits%8);return false;}
     const choices=itemsForStation(this.game.byId,this.station).filter(item=>!this.game.selection(this.outfit,item));
     if(!choices.length)return false;
     const item=choices[(this.visits*3+this.index*5)%choices.length];

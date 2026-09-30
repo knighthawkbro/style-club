@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { poseFrame, STRIDE_LENGTH } from './motion.mjs';
+import { poseFrame, STRIDE_LENGTH, HEEL_STRIDE_LENGTH } from './motion.mjs';
+import { interactionFrame } from './interactions.mjs';
 
 // All distances are in the same body coordinate system. Garments are complete
 // elliptical surfaces; sleeves and trouser legs share the character's joints.
@@ -726,7 +727,12 @@ export function buildCharacter(outfit,catalog){
     clipped.forEach((copy,original)=>{if(!retained.has(original))original.dispose();});
   }
   const heldPet=!!outfit.extras.pet,down=new THREE.Vector3(0,-1,0),heelLift=['blockheel','sparkleheel'].includes(catalog[outfit.shoes.id].shape)?.15:0;
-  let seated=false,skirtRest=null;
+  const brush=group(bones.arms[1].forearm,'makeup brush in hand',[.02,-.48,.018]);
+  capsule(brush,'brush handle',material('#835c79'),[0,-.09,0],.018,.24);
+  const brushTip=ball(brush,'soft brush tip',material('#d990b3'),[0,-.245,0],[.055,.07,.05]);
+  const sponge=ball(brush,'makeup sponge',material('#d990b3'),[0,-.11,0],[.08,.105,.055]);
+  brush.visible=false;
+  let seated=0,skirtRest=null;
   function drapeSkirt(sitting){
     if(!skirt||sitting===seated)return;
     if(!skirtRest){
@@ -738,7 +744,8 @@ export function buildCharacter(outfit,catalog){
       for(let i=0;i<attr.count;i++){
         const p=new THREE.Vector3().fromArray(positions,i*3);
         if(sitting){p.applyMatrix4(matrix);const length=Math.max(0,1.65-p.y),lap=Math.min(length,.72),front=THREE.MathUtils.clamp((p.z+.23)/.55,0,1);
-          if(length>0)p.y=Math.max(.92,1.65-lap*.16-Math.max(0,length-.72));p.z+=lap*.98*front;p.applyMatrix4(inverse);}
+          if(length>0)p.y=Math.max(.92,1.65-lap*.16-Math.max(0,length-.72));p.z+=lap*.98*front;p.applyMatrix4(inverse);
+          p.lerp(new THREE.Vector3().fromArray(positions,i*3),1-sitting);}
         attr.setXYZ(i,p.x,p.y,p.z);
       }
       attr.needsUpdate=true;part.geometry.computeVertexNormals();part.geometry.computeBoundingSphere();
@@ -755,43 +762,53 @@ export function buildCharacter(outfit,catalog){
     const lower=new THREE.Quaternion().setFromUnitVectors(down,target.sub(elbow).normalize());
     arm.forearm.quaternion.copy(arm.upper.quaternion).invert().multiply(lower);
   }
-  function applyFrame(frame,style,walking,seatHeight=null){
+  function applyFrame(frame,style,walking,seatHeight=null,seatBlend=1,action=null){
     frame={...frame,position:[...frame.position],feet:frame.feet.map(foot=>[...foot])};
-    const sitting=seatHeight!==null;drapeSkirt(sitting);seated=sitting;
-    if(sitting){frame.position=[0,seatHeight-1.51,0];frame.rotation=[0,0,0];frame.torso=[-.025,0,0];frame.head=[0,0,.025];frame.hands=[[-.25,1.37,.42],[.25,1.37,.42]];}
-    else if(heelLift){frame.position=[...frame.position];frame.position[1]+=heelLift;frame.feet=frame.feet.map(foot=>[foot[0],foot[1]+heelLift,foot[2],foot[3]]);}
-    root.position.set(...frame.position);root.rotation.set(...frame.rotation);
+    const sitting=seatHeight===null?0:THREE.MathUtils.clamp(seatBlend,0,1);drapeSkirt(sitting);seated=sitting;
+    if(heelLift){frame.position[1]+=heelLift;frame.feet=frame.feet.map(foot=>[foot[0],foot[1]+heelLift,foot[2],foot[3]]);}
     // Lower the hips just enough for both legs to reach their planted feet.
-    if(!sitting)for(const [i,leg] of bones.legs.entries()){
-      const [x,lift,z]=frame.feet[i],dx=x-root.position.x-leg.side*.155,dz=z-root.position.z;
-      root.position.y=Math.min(root.position.y,.16+lift+Math.sqrt(Math.max(.1,1.342**2-dx**2-dz**2))-1.51);
+    for(const [i,leg] of bones.legs.entries()){
+      const [x,lift,z]=frame.feet[i],dx=x-frame.position[0]-leg.side*.155,dz=z-frame.position[2];
+      frame.position[1]=Math.min(frame.position[1],.16+lift+Math.sqrt(Math.max(.1,1.342**2-dx**2-dz**2))-1.51);
     }
+    const standing=[...frame.position];
+    if(sitting){
+      const seat={position:[0,seatHeight-1.51,0],rotation:[0,0,0],torso:[-.025,0,0],head:[0,0,.025]};
+      for(const key of Object.keys(seat))frame[key]=frame[key].map((v,i)=>THREE.MathUtils.lerp(v,seat[key][i],sitting));
+      frame.hands=frame.hands.map((h,i)=>h.map((v,j)=>THREE.MathUtils.lerp(v,[i?.25:-.25,1.37,.42][j],sitting)));
+    }
+    frame=interactionFrame(frame,reducedMotion?null:action);
+    brush.visible=!reducedMotion&&action?.kind==='brush'&&action.progress>.12&&action.progress<.87;
+    if(brush.visible){const sponging=action.tool==='sponge';brush.children[0].visible=!sponging;brushTip.visible=!sponging;sponge.visible=sponging;brushTip.material.color.set(action.color||'#d990b3');sponge.material.color.copy(brushTip.material.color);}
+    root.position.set(...frame.position);root.rotation.set(...frame.rotation);
     torso.rotation.set(...frame.torso);bones.head.rotation.set(...frame.head);
     poseHeart.visible=!sitting&&style===4&&walking<.1&&!heldPet;
     bones.arms.forEach((arm,i)=>placeArm(arm,heldPet&&i===0?[-.20,1.93,.55]:frame.hands[i]));
     for(const [i,leg] of bones.legs.entries()){
-      if(sitting){const knee=Math.asin(THREE.MathUtils.clamp((seatHeight-.16-heelLift)/.67,.2,1));leg.hip.rotation.set(-Math.PI/2,0,leg.side*.025);leg.knee.rotation.set(knee,0,0);leg.foot.rotation.set(Math.PI/2-knee,0,-leg.side*.025);continue;}
-      const [x,lift,z,pitch]=frame.feet[i],dx=x-root.position.x-leg.side*.155,dy=.16+lift-root.position.y-1.51,dz=z-root.position.z;
+      const [x,lift,z,pitch]=frame.feet[i],dx=x-standing[0]-leg.side*.155,dy=.16+lift-standing[1]-1.51,dz=z-standing[2];
       const vertical=Math.hypot(dy,dx),d=Math.min(1.348,Math.hypot(vertical,dz));
       const hipX=-Math.atan2(dz,vertical)-Math.acos(THREE.MathUtils.clamp((.68**2+d*d-.67**2)/(2*.68*d),-1,1));
       const kneeX=Math.PI-Math.acos(THREE.MathUtils.clamp((.68**2+.67**2-d*d)/(2*.68*.67),-1,1)),hipZ=Math.atan2(dx,-dy);
       leg.hip.rotation.set(hipX,0,hipZ,'ZXY');leg.knee.rotation.set(kneeX,0,0);
       leg.foot.rotation.set(-hipX-kneeX+pitch,0,-hipZ,'XZY');
+      if(sitting){const knee=Math.asin(THREE.MathUtils.clamp((seatHeight-.16-heelLift)/.67,.2,1));
+        leg.hip.rotation.x=THREE.MathUtils.lerp(hipX,-Math.PI/2,sitting);leg.hip.rotation.z=THREE.MathUtils.lerp(hipZ,leg.side*.025,sitting);
+        leg.knee.rotation.x=THREE.MathUtils.lerp(kneeX,knee,sitting);leg.foot.rotation.x=THREE.MathUtils.lerp(-hipX-kneeX+pitch,Math.PI/2-knee,sitting);leg.foot.rotation.z=THREE.MathUtils.lerp(-hipZ,-leg.side*.025,sitting);}
     }
     if(skirt){
       const lift=!sitting&&longSkirt?Math.max(0,-root.position.y-.035):0;
       skirt.scale.y=1-lift/(1.73-hem);skirt.position.y=1.73*(1-skirt.scale.y);
       root.updateWorldMatrix(true,true);
-      coveredLegs.set(new THREE.Vector3(0,-1,0),sitting?(longSkirt?.94:1.48):hem+lift+.008).applyMatrix4(root.matrixWorld);
+      coveredLegs.set(new THREE.Vector3(0,-1,0),THREE.MathUtils.lerp(hem+lift+.008,longSkirt?.94:1.48,sitting)).applyMatrix4(root.matrixWorld);
     }
   }
   function pose(time=0,style=0,walking=false){applyFrame(poseFrame(reducedMotion?0:time,style,time*8,walking?1:0),style,walking?1:0);}
   let phase=0,walkWeight=0,previous=null;
-  function animate(time,style,{distance=0,dt=1/60,strut=false,seatHeight=null}={}){
-    const seconds=Math.min(.05,Math.max(0,dt));phase+=distance/STRIDE_LENGTH*Math.PI*2;
+  function animate(time,style,{distance=0,dt=1/60,strut=false,seatHeight=null,seatBlend=1,action=null}={}){
+    const seconds=Math.min(.05,Math.max(0,dt));phase+=distance/(heelLift?HEEL_STRIDE_LENGTH:STRIDE_LENGTH)*Math.PI*2;
     walkWeight=THREE.MathUtils.damp(walkWeight,distance>.00001?1:0,14,seconds);
     if(walkWeight<.001)walkWeight=0;if(walkWeight>.999)walkWeight=1;
-    const frame=poseFrame(reducedMotion?0:time,style,phase,walkWeight,strut);
+    const frame=poseFrame(reducedMotion?0:time,style,phase,walkWeight,strut,!!heelLift);
     // Ease between poses, but leave the distance-driven steps unsmoothed.
     if(previous){const alpha=1-Math.exp(-14*seconds);
       for(const key of['position','torso','head'])frame[key]=frame[key].map((v,i)=>THREE.MathUtils.lerp(previous[key][i],v,alpha));
@@ -799,7 +816,7 @@ export function buildCharacter(outfit,catalog){
       frame.hands=frame.hands.map((hand,i)=>hand.map((v,j)=>THREE.MathUtils.lerp(previous.hands[i][j],v,alpha)));
       if(walkWeight<.8)frame.feet=frame.feet.map((foot,i)=>foot.map((v,j)=>THREE.MathUtils.lerp(previous.feet[i][j],v,alpha)));
     }
-    previous=frame;applyFrame(frame,style,walkWeight,seatHeight);
+    previous=frame;applyFrame(frame,style,walkWeight,seatHeight,seatBlend,action);
   }
   pose();
   return {root,bones,pose,animate,coveredLegs,dispose(){disposeTree(root);root.removeFromParent();}};
