@@ -52,9 +52,13 @@ git pull --ff-only
 docker compose up -d --build
 ```
 
-Version 4 includes the fully stocked mall, VIP and Halloween collections, expanded salon, jewelry, held pets, model poses, friendly shopper conversations, and runway audience. All 115 items are on physical racks and shelves. The Compose ports and tunnel destination stay the same. Reload the game after the container update; saved outfits and lookbooks remain in the same browser storage.
+Version 5 adds shopping companions, shared bench seating, salon and makeup activities, dressing mirrors, a photo booth, lookbook backups, and high heels. All 117 items are on physical racks and shelves. The Compose ports and tunnel destination stay the same. Reload the game after the container update; saved outfits and lookbooks remain in the same browser storage.
 
-Docker builds automatically add content-based version tags to the page's script and stylesheet URLs. Changed files load under new URLs, so browser or Cloudflare caches can keep older files without mixing them into the updated game. Keep your proxy's normal cache key, including query strings, and allow the HTML page to revalidate. An existing tab needs a reload to open the new release; clearing site data is unnecessary.
+Docker builds automatically add content-based version tags to the page's script and stylesheet URLs. Changed files load under new URLs. The server also sends `Cache-Control: no-store`, `CDN-Cache-Control: no-store`, and `Cloudflare-CDN-Cache-Control: no-store` on game responses. Keep your proxy's normal cache key, including query strings, and do not override these headers with a Cache Everything rule. An existing tab needs a reload to open the new release; clearing browser site data is unnecessary and erases local saves.
+
+If Cloudflare already holds an old page, purge the cache for this hostname in Cloudflare once after deploying. That clears Cloudflare's copies, not the child's browser saves. If a Cache Rule forces caching, use a cache-bypass rule for the game hostname and set Browser Cache TTL to respect existing headers. See [Cloudflare origin cache control](https://developers.cloudflare.com/cache/concepts/cache-control/) and [CDN cache-control headers](https://developers.cloudflare.com/cache/concepts/cdn-cache-control/). No Cloudflare settings are changed by this repository.
+
+Before clearing any browser site data, use **My lookbook → Download lookbook backup**. Restore the JSON file in the lookbook afterward. Backups include booth photos and friend outfits. Saving remains local to each browser; the Docker container does not store family profiles or backups.
 
 Stop and remove this deployment's container and network:
 
@@ -66,7 +70,7 @@ The service runs as an unprivileged user with a read-only filesystem. It has no 
 
 ## Saved outfits
 
-Outfits and the lookbook stay in the player's browser on that device. Rebuilding or restarting the container does not erase them as long as the player uses the same browser and web address. Moving from `127.0.0.1` on this PC to a new host starts a separate browser save area; old looks do not automatically transfer. Changing the hostname, port, or HTTP/HTTPS scheme also changes that save area. Download favorite outfit pictures from the old game before switching if you want to keep copies.
+Outfits and the lookbook stay in the player's browser on that device. Rebuilding or restarting the container does not erase them as long as the player uses the same browser and web address. Moving from `127.0.0.1` on this PC to a new host starts a separate browser save area; old looks do not automatically transfer. Changing the hostname, port, or HTTP/HTTPS scheme also changes that save area. Before switching addresses or clearing site data, choose **Download lookbook backup** in My lookbook. On the new address, choose **Restore a backup** to import the outfits and photo booth pictures. Existing looks remain intact and duplicate IDs are skipped. Individual PNG downloads keep finished pictures as well.
 
 ## Optional reverse proxy
 

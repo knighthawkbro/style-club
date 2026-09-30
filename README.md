@@ -16,7 +16,7 @@ Pick clothes and colors, customize hair and skin tone, and take the outfit to th
 
 - Click or tap the floor to walk. Click a rack to walk over and open its clothes. Routes go around furniture.
 - Use the mouse to **drag a garment straight off a 3D rack onto your character**. A highlighted target shows where to drop it. You can also drag dressing-room cards. Dropping elsewhere cancels; Escape cancels a held piece. Clicking and tapping still work.
-- **All 115 pieces are out in the shops**. Walk around the wall racks and two-level shelves to discover them. Displays show the actual garment, hairstyle, pet, or accessory you will wear; nothing needs a rack page or a menu to appear.
+- **All 117 pieces are out in the shops**. Walk around the wall racks and two-level shelves to discover them. Displays show the actual garment, hairstyle, pet, or accessory you will wear; nothing needs a rack page or a menu to appear.
 - Click the room, then use **WASD** or **arrow keys** to move. On-screen arrows also work with a mouse or touch.
 - **Drag** the room to turn the camera. Press **E**, or the nearby-rack button, to try the closest station.
 - **Outfit view** brings the camera close. Drag or use the turn buttons to inspect the front, sides, and back. **Explore** returns to walking.
@@ -26,10 +26,15 @@ Pick clothes and colors, customize hair and skin tone, and take the outfit to th
 - **Strike a pose** opens sixteen named poses, including Runway classic, Cover star, Over the shoulder, Cross step, and Frame the face. Walking temporarily animates the legs and returns to the selected pose when you stop. Your pose is used on the runway and saved with its picture.
 - **Full screen** expands the whole game, including its wardrobe. Use **Exit full screen** or Escape to return. Browsers that cannot enter native fullscreen still expand the game to fill their window.
 - Poppy, Nova, and Jules wander between shops, try clothes, and give friendly compliments in speech bubbles. They notice a new outfit, hair color, hairstyle, makeup, jewelry, or pet. Click a nearby friend, press **F**, or choose **Say hi**. **Pose together** makes a matching pose. The **3 mall friends** button switches to a quiet room.
+- **Shopping friends** invites Poppy, Nova, or Jules to follow you between shops. Ask for an **Outfit idea**, then choose **Try** to wear it. Your companion joins the runway, and **See you later** sends her back to exploring. Switching friends or choosing a quiet mall ends the previous invitation.
+- Click the physical benches or choose **Sit together** to walk to a free seat. Your invited friend takes the neighboring seat. **Done**, movement keys, or another activity gets you up again.
+- Click the **Salon chair** at Charm & Co. to sit, choose hair and colors, and see the result in the mirror. At GLOW beauty, the **Makeup vanity** has brushes and a palette: pick a design and color, then drag the brush onto your character, tap your face, or choose **Apply face paint**. **Wash off** starts fresh. Dressing mirrors in the clothing and shoe shops show the current outfit while you try pieces and poses.
+- The **Photo booth** is at the end of the promenade. Choose Rose garden, Starlight, Halloween, or Candy clouds; include any of the three friends, your held pet, and a pose. Add up to twelve stickers and drag them into place (arrow keys also work; Delete removes the focused sticker). Save the photo to **My lookbook** and download its PNG there. Closing an unsaved photo leaves the outfit unchanged.
+- Sole Mates includes **Bow step heels** with chunky heels and **Starlight heels** with sparkly details. Both have fitted 3D heel shapes, colors, and draggable physical displays.
 
 ## Included
 
-- 92 clothing and accessory pieces, 12 hairstyles, six skin tones, 14 clothing colors, and 18 hair colors.
+- 94 clothing and accessory pieces, 12 hairstyles, six skin tones, 14 clothing colors, and 18 hair colors.
 - 19 VIP pieces and 14 Halloween choices: pearl and velvet gowns, exclusive jewelry, costumes, hats, boots, wings, and face paint. Every item is available without a purchase.
 - Eleven makeup and face-paint choices, sixteen poses, three autonomous shoppers, rack dragging, and fullscreen controls.
 - Eight nearby boutiques around a tiled mall promenade, with a fountain, benches, shop windows, a directory, furniture collision, smooth click-to-walk routes, and interactive racks.
@@ -47,7 +52,7 @@ There are no accounts, strangers, online chat, ads, purchases, trackers, outside
 
 The timer pauses when the page becomes hidden, when an in-game dialog opens, or when the child opens the lookbook. It stays paused until explicitly resumed. Closing or refreshing the game resets the timer.
 
-The current outfit and lookbook are stored in this browser on this device. Other browsers, private windows, different local addresses, and opening `index.html` directly may have separate storage. Clearing browser data removes saved looks. Download favorite pictures to keep a durable copy. If storage is blocked or full, the game still works and explains that saving is temporary.
+The current outfit and lookbook are stored in this browser on this device. Other browsers, private windows, different local addresses, and opening `index.html` directly may have separate storage. **Download lookbook backup** keeps all saved outfits and booth photos in a small JSON file. **Restore a backup** adds missing looks without replacing existing ones; duplicate IDs are skipped. Photos store the outfits, poses, backdrop, and sticker positions so they can be recreated without filling browser storage with image files. PNG downloads keep a separate finished picture. Clearing site data removes browser saves, so keep the backup somewhere safe first. Already erased saves cannot be recovered without a backup or another browser that still has them. If storage is blocked or full, the game still works and explains that saving is temporary.
 
 This is an original solo 3D fashion mall, unaffiliated with Roblox or Dress to Impress. The character, clothes, and room are procedural original artwork. There are no multiplayer servers or copied game assets. The model uses articulated parts and fitted clothing geometry; it does not simulate cloth physics.
 
@@ -67,6 +72,8 @@ npm test        Run the game rules and artwork tests
 - `src/scene3d.mjs`: mall scene, lighting, camera, controls, rack interaction, runway, and 3D portrait rendering.
 - `src/mall.mjs`: mall architecture, shop interiors, displays, and camera cutaways.
 - `src/shop-displays.mjs`: physical racks, shelves, item labels, and draggable previews made from the wearable geometry.
+- `src/activity-spots.mjs`: salon seats, makeup tools, dressing mirrors, and the mall photo booth.
+- `src/photo-booth.mjs`: group portraits, illustrated backdrops, and movable sticker artwork.
 - `src/motion.mjs`: sixteen pose targets and distance-driven steps with planted feet.
 - `src/audience.mjs`: lightweight clapping and cheering runway guests.
 - `src/world-rules.mjs`: movement, collision, station locations, and click-to-walk pathfinding.

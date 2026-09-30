@@ -1,6 +1,6 @@
-import { STATIONS, planPath, movePlayer, walkable, advancePath, itemsForStation } from './world-rules.mjs';
+import { STATIONS, OBSTACLES, planPath, movePlayer, walkable, advancePath, itemsForStation } from './world-rules.mjs';
 
-const PROFILES = [
+export const PROFILES = [
   { name: 'Poppy', skin: '#e8b99a', hair: 'twin-tails', hairColor: '#8d5136', start: [-1.8,2.5], clothes: ['rainbow-dress','maryjanes','cat-ears'], route: ['dresses','extras','makeup','vip','runway','hair'] },
   { name: 'Nova', skin: '#925c43', hair: 'puff-buns', hairColor: '#241e24', start: [1.8,2.5], clothes: ['varsity','cargo','high-tops','headphones'], route: ['bottoms','tops','halloween','runway','shoes','makeup'] },
   { name: 'Jules', skin: '#d39c79', hair: 'side-braid', hairColor: '#d394a7', start: [1.6,-3.3], clothes: ['butterfly-dress','star-boots','tiara'], route: ['hair','shoes','vip','makeup','extras','halloween'] }
@@ -15,6 +15,42 @@ export class ShopperBrain {
     for(const id of this.profile.clothes)this.outfit=game.wear(this.outfit,id);
     Object.assign(this.outfit,{skin:this.profile.skin,hair:this.profile.hair,hairColor:this.profile.hairColor});
     this.phase='posing';this.remaining=.3+index*.7;this.routeIndex=-1;this.path=[];this.changes=0;this.visits=0;this.blocked=0;this.pose=0;
+  }
+  invite(){this.following=true;this.seat=null;this.seatGoal=null;this.phase='following';this.path=[];this.repath=0;this.blocked=0;}
+  dismiss(){this.following=false;this.seat=null;this.seatGoal=null;this.path=[];this.phase='posing';this.remaining=.3;}
+  sitWith(seat){
+    if(!this.following)return;
+    this.seat=null;this.seatGoal={...seat};this.path=planPath(this.position,{x:seat.approach[0],z:seat.approach[1]});this.phase='joining';
+  }
+  stand(){if(this.following){this.seat=null;this.seatGoal=null;this.phase='following';this.path=[];this.repath=0;}}
+  followTick(dt,player,neighbors){
+    const before={...this.position};
+    if(this.seat)return{changed:false,walking:false,distance:0,pose:0,seated:true};
+    if(this.phase==='chatting'&&(this.remaining-=dt)>0&&Math.hypot(player.x-this.position.x,player.z-this.position.z)<3.5)return{changed:false,walking:false,distance:0,pose:this.pose};
+    if(!this.seatGoal){
+      this.phase='following';this.repath=(this.repath||0)-dt;
+      if(this.repath<=0){
+        const yaw=player.yaw||0;
+        const candidates=[-.7,.7,-1.8,1.8,Math.PI].map(offset=>({x:player.x-Math.sin(yaw+offset)*1.65,z:player.z-Math.cos(yaw+offset)*1.65})).filter(p=>walkable(p.x,p.z));
+        const target=candidates.sort((a,b)=>Math.hypot(a.x-this.position.x,a.z-this.position.z)-Math.hypot(b.x-this.position.x,b.z-this.position.z))[0]||player;
+        this.path=Math.hypot(player.x-this.position.x,player.z-this.position.z)>2||Math.hypot(target.x-this.position.x,target.z-this.position.z)>.7?planPath(this.position,target):[];
+        this.repath=.7;
+      }
+    }
+    const result=advancePath(this.position,this.path,dt,3.15),candidate=result.position;
+    const others=[{...player,radius:.85},...neighbors.map(p=>({...p,radius:.7}))];
+    const crowded=others.some(other=>Math.hypot(candidate.x-other.x,candidate.z-other.z)<other.radius&&Math.hypot(candidate.x-other.x,candidate.z-other.z)<Math.hypot(this.position.x-other.x,this.position.z-other.z));
+    if(!crowded){this.position=candidate;this.path=result.path;this.blocked=0;}
+    else if((this.blocked+=dt)>.5){
+      const goal=this.seatGoal?{x:this.seatGoal.approach[0],z:this.seatGoal.approach[1]}:this.path.at(-1);
+      if(goal)this.path=planPath(this.position,goal,[...OBSTACLES,...others.map(p=>({x:p.x,z:p.z,halfX:.55,halfZ:.55}))]);
+      this.blocked=0;
+    }
+    const distance=Math.hypot(this.position.x-before.x,this.position.z-before.z);
+    if(distance>.0001){const heading=Math.atan2(this.position.x-before.x,this.position.z-before.z);this.yaw+=Math.atan2(Math.sin(heading-this.yaw),Math.cos(heading-this.yaw))*(1-Math.exp(-dt*12));}
+    else if(!this.path.length)this.yaw=Math.atan2(player.x-this.position.x,player.z-this.position.z);
+    if(this.seatGoal&&!this.path.length&&Math.hypot(this.position.x-this.seatGoal.approach[0],this.position.z-this.seatGoal.approach[1])<.3){this.seat=this.seatGoal;this.seatGoal=null;this.phase='seated';this.yaw=this.seat.yaw;}
+    return{changed:false,walking:distance>.0001,distance,pose:this.pose,seated:!!this.seat};
   }
   nextStation() {
     this.routeIndex=(this.routeIndex+1)%this.profile.route.length;
@@ -34,6 +70,7 @@ export class ShopperBrain {
   greet(player,pose=2){this.phase='chatting';this.remaining=6;this.pose=pose;this.yaw=Math.atan2(player.x-this.position.x,player.z-this.position.z);}
   tick(seconds, player, neighbors=[]) {
     const dt=Math.min(.05,Math.max(0,seconds)),before={...this.position};let changed=false,walking=false;
+    if(this.following&&player)return this.followTick(dt,player,neighbors);
     if(this.phase==='walking') {
       const next=this.path[0];
       if(!next) {
@@ -73,6 +110,8 @@ export class ShopperBrain {
     return {changed,walking,distance:Math.hypot(this.position.x-before.x,this.position.z-before.z),pose:this.pose};
   }
   description() {
+    if(this.seat)return 'sitting with you';
+    if(this.following)return this.seatGoal?'coming to sit with you':'shopping with you';
     if(this.phase==='chatting')return 'saying hello and posing with you';
     if(this.phase==='walking')return `visiting ${this.station.name.toLowerCase()}`;
     if(this.phase==='browsing')return `choosing ${this.station.name.toLowerCase()}`;

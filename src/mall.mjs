@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { STORES, STATIONS, BENCH_BANKS, shopStock } from './world-rules.mjs';
+import { buildActivitySpots } from './activity-spots.mjs';
 
 const mat=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.78,...extra});
 const cream=mat('#fff7e9'),stone=mat('#eee6df'),gold=mat('#c1a06c',{metalness:.45,roughness:.4});
@@ -40,9 +41,10 @@ export function buildMall(scene,catalog,{makeRack,makeDisplay,makeMirror,label,a
     }
     for(const z of[-10.8,10.8])plant(room,side*2.85,z);
   }
-  const benchWood=mat('#b18b74');
-  for(const bank of BENCH_BANKS){
+  const benchWood=mat('#b18b74'),benches=[];
+  for(const [index,bank] of BENCH_BANKS.entries()){
     const pair=new THREE.Group();pair.name='Back-to-back promenade benches';pair.position.set(bank.x,0,bank.z);room.add(pair);
+    pair.userData.activity=`bench-${index}`;benches.push(pair);
     box(pair,[.16,.60,1.7],benchWood,[0,.80,0]);
     box(pair,[.18,.035,1.72],gold,[0,1.115,0]);
     for(const side of[-1,1]){
@@ -84,6 +86,7 @@ export function buildMall(scene,catalog,{makeRack,makeDisplay,makeMirror,label,a
   box(room,[.93,1.1,.55],mat('#a68194'),[-1.8,.55,7.4]);
   const directory=sign(room,'STYLE CLUB','8 boutiques · one lovely day','#926e89',1.6);directory.position.set(-1.8,1.50,7.4);
   const interactions=shopStock(catalog).map(fixture=>fixture.kind==='rack'?makeRack(room,fixture,catalog):fixture.kind==='shelf'?makeDisplay(room,fixture,catalog):makeMirror(room,fixture));
+  const activitySpots=buildActivitySpots(room,label);interactions.push(...benches,...activitySpots.objects);
   for(const station of STATIONS){
     if(station.id==='runway'){
       const runway=new THREE.Group();room.add(runway);runway.position.set(station.x,0,station.z);runway.userData.station=station;
@@ -93,7 +96,7 @@ export function buildMall(scene,catalog,{makeRack,makeDisplay,makeMirror,label,a
       interactions.push(runway);
     }
   }
-  return{room,wall,walls,interactions,update(camera,position,time){
+  return{room,wall,walls,interactions,mirrors:activitySpots.mirrors,update(camera,position,time){
     walls.left.visible=camera.position.x>-12.3;walls.right.visible=camera.position.x<12.3;walls.back.visible=camera.position.z>-12.3;
     // Lower the wall between the camera and the player, like a dollhouse.
     for(const p of partitions){const crossing=(camera.position.z-p.z)*(position.z-p.z)<0&&camera.position.x*p.side>4.25;

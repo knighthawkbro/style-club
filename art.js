@@ -122,7 +122,11 @@
     if(item.category==='shoes') {
       for(const flip of [false,true]) {
         s+=`<g${flip?' transform="translate(240 0) scale(-1 1)"':''}>`;
-        if(['boot','starboot'].includes(item.shape)) {
+        if(['blockheel','sparkleheel'].includes(item.shape)){
+          s+=path('M102 416L110 416L110 433L104 433Z',dark)+path('M68 429Q64 421 79 417L86 399Q98 410 107 401L112 414Q98 418 91 430Z',fill,dark,1.4);
+          s+=path('M85 402Q97 410 108 403','none',light,3);
+          if(item.shape==='blockheel')s+=bow(78,419,.25,light);else s+=star(79,421,5,'#fff0bc');
+        } else if(['boot','starboot'].includes(item.shape)) {
           s+=path('M85 364L108 364L108 413Q113 424 105 430L70 430Q61 426 69 417L82 411Z',fill,dark,1.4);
           s+=path('M87 365L106 365','none',light,4);s+=path('M71 429L105 429','none',dark,4);
           if(item.shape==='starboot')s+=star(96,386,7);else s+=path('M90 377L101 377 M88 388L101 388 M87 400L102 400','none',light,2);

@@ -67,6 +67,8 @@
     { id: 'trousers', category: 'bottoms', name: 'Sunday stroll', detail: 'Easy, breezy, you', shape: 'trousers', color: '#a4bba1', tags: ['nature', 'cozy', 'casual'] },
     { id: 'flower-skirt', category: 'bottoms', name: 'Daisy chain', detail: 'A garden to go', shape: 'flower', color: '#f0ad88', tags: ['floral', 'summer', 'nature'] },
     { id: 'maryjanes', category: 'shoes', name: 'Ballet days', detail: 'A lovely little step', shape: 'maryjane', color: '#e4c2ad', tags: ['fancy', 'cute', 'pastel'] },
+    {id:'bow-heels',category:'shoes',name:'Bow step heels',detail:'Chunky heels with a pretty bow',shape:'blockheel',color:'#db91a5',tags:['fancy','cute','pastel'],fresh:true},
+    {id:'party-heels',category:'shoes',name:'Starlight heels',detail:'Sparkly heels for the runway',shape:'sparkleheel',color:'#bda5d8',tags:['sparkle','fancy','dreamy'],fresh:true},
     { id: 'sneakers', category: 'shoes', name: 'Happy steps', detail: 'Let’s go places', shape: 'sneaker', color: '#f2e9d8', tags: ['casual', 'sporty', 'adventure'] },
     { id: 'boots', category: 'shoes', name: 'Rain or shine', detail: 'Puddle-jump approved', shape: 'boot', color: '#a4bba1', tags: ['nature', 'adventure', 'cozy'] },
     { id: 'sandals', category: 'shoes', name: 'Golden hour', detail: 'Toes in the sunshine', shape: 'sandal', color: '#edcc82', tags: ['summer', 'floral', 'casual'] },
@@ -262,14 +264,49 @@
     for (const slot of ['head', 'bag', 'neck', 'back', 'ears', 'wrist', 'pet']) result.extras[slot] = safePiece(raw.extras?.[slot], 'extras', slot);
     return result;
   }
+  const PHOTO_BACKGROUNDS = [
+    {id:'rose',name:'Rose garden',icon:'✿',color:'#efd1db'},
+    {id:'stars',name:'Starlight',icon:'✦',color:'#53486f'},
+    {id:'halloween',name:'Halloween',icon:'☾',color:'#b599cc'},
+    {id:'clouds',name:'Candy clouds',icon:'☁',color:'#bcdce6'}
+  ];
+  const PHOTO_STICKERS = [
+    {id:'heart',name:'Heart',icon:'♡'}, {id:'star',name:'Star',icon:'✦'},
+    {id:'flower',name:'Flower',icon:'✿'}, {id:'bow',name:'Bow',icon:'🎀'},
+    {id:'pumpkin',name:'Pumpkin',icon:'🎃'}, {id:'ghost',name:'Friendly ghost',icon:'👻'},
+    {id:'paw',name:'Paw print',icon:'🐾'}, {id:'sparkle',name:'Sparkles',icon:'✨'}
+  ];
+  function sanitizePhoto(raw){
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;
+    const clamp=(value,fallback,min,max)=>Number.isFinite(value)?Math.min(max,Math.max(min,value)):fallback;
+    const names=new Set(),friends=[];
+    if(Array.isArray(raw.friends))for(const friend of raw.friends){
+      if(!friend||!['Poppy','Nova','Jules'].includes(friend.name)||names.has(friend.name)||!friend.outfit)continue;
+      names.add(friend.name);friends.push({name:friend.name,outfit:sanitizeOutfit(friend.outfit)});
+    }
+    return {background:PHOTO_BACKGROUNDS.some(b=>b.id===raw.background)?raw.background:'rose',friends,
+      stickers:(Array.isArray(raw.stickers)?raw.stickers:[]).filter(s=>s&&PHOTO_STICKERS.some(p=>p.id===s.id)).slice(0,12).map(s=>({id:s.id,x:clamp(s.x,.5,.04,.96),y:clamp(s.y,.5,.04,.96),size:clamp(s.size,.085,.05,.16)}))};
+  }
   function sanitizeLooks(raw) {
     if (!Array.isArray(raw)) return [];
     const seen = new Set();
     return raw.filter(look => {
       if (!look || typeof look.id !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(look.id) || seen.has(look.id) || !look.outfit) return false;
       seen.add(look.id); return true;
-    }).slice(0, 40).map(look => ({ id: look.id, name: typeof look.name === 'string' ? look.name.slice(0, 40) : 'My lovely look', themeId: THEMES.some(t => t.id === look.themeId) ? look.themeId : THEMES[0].id, outfit: sanitizeOutfit(look.outfit), pose:Number.isInteger(look.pose)&&look.pose>=0&&look.pose<POSES.length?look.pose:1, date: typeof look.date === 'string' && !Number.isNaN(Date.parse(look.date)) ? look.date : new Date(0).toISOString() }));
+    }).slice(0, 40).map(look => ({ id: look.id, name: typeof look.name === 'string' ? look.name.slice(0, 40) : 'My lovely look', themeId: THEMES.some(t => t.id === look.themeId) ? look.themeId : THEMES[0].id, outfit: sanitizeOutfit(look.outfit), pose:Number.isInteger(look.pose)&&look.pose>=0&&look.pose<POSES.length?look.pose:1, date: typeof look.date === 'string' && !Number.isNaN(Date.parse(look.date)) ? look.date : new Date(0).toISOString(),...(look.photo?{photo:sanitizePhoto(look.photo)}:{}) }));
   }
   function remainingSeconds(deadline, now) { return Math.max(0, Math.ceil((deadline - now) / 1000)); }
-  return { COLORS, HAIR_COLORS, SKIN_TONES, CATEGORIES, ITEMS, POSES, THEMES, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, remainingSeconds };
+  function readBackup(text){
+    if(typeof text!=='string'||text.length>1000000)throw new Error('Choose a Style Club backup smaller than 1 MB.');
+    let raw;try{raw=JSON.parse(text);}catch{throw new Error('That file could not be read. Choose a Style Club backup (.json).');}
+    if(raw?.format!=='style-club-lookbook'||raw.version!==1||!Array.isArray(raw.looks))throw new Error('That is not a supported Style Club lookbook backup.');
+    return sanitizeLooks(raw.looks);
+  }
+  function mergeLooks(existing,incoming){
+    const current=sanitizeLooks(existing),known=new Set(current.map(l=>l.id));
+    const additions=sanitizeLooks(incoming).filter(l=>!known.has(l.id));
+    if(current.length+additions.length>40)throw new Error('Your lookbook has room for 40 looks. Keep a backup, then remove a few looks before restoring this file.');
+    return{looks:[...additions,...current],added:additions.length};
+  }
+  return { COLORS, HAIR_COLORS, SKIN_TONES, CATEGORIES, ITEMS, POSES, THEMES, PHOTO_BACKGROUNDS, PHOTO_STICKERS, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, sanitizePhoto, readBackup, mergeLooks, remainingSeconds };
 });

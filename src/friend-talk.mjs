@@ -2,6 +2,17 @@
 const named=(game,id)=>game.byId[id]?.name;
 const clothingKeys=['dress','top','bottom','shoes'];
 
+export function outfitSuggestion(outfit,game,storeId,turn=0,themeId='garden'){
+  const stationCategory=storeId==='hair'?'extras':storeId;
+  const tags=game.THEMES.find(t=>t.id===themeId)?.tags||[];
+  const choices=game.ITEMS.filter(item=>!game.selection(outfit,item)&&!['hair','makeup'].includes(item.category)&&(
+    ['vip','halloween'].includes(storeId)?item.collection===storeId:
+    ['dresses','tops','bottoms','shoes','extras'].includes(stationCategory)?item.category===stationCategory&&!item.collection:item.tags?.some(t=>tags.includes(t))
+  ));
+  const item=choices[((turn%choices.length)+choices.length)%choices.length];
+  return item?{id:item.id,text:`Shall we try ${item.name}? I think it would be a fun new look!`}:null;
+}
+
 export function outfitNotice(before,after,game){
   if(!before||!after)return null;
   if(before.extras.pet?.id!==after.extras.pet?.id&&after.extras.pet)return `Aww! ${named(game,after.extras.pet.id)} is such a cute runway buddy!`;

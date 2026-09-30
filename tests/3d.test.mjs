@@ -85,7 +85,7 @@ test('movement speed is frame based and diagonals cannot move faster', () => {
 
 test('the player cannot walk through walls or furniture', () => {
   let p={x:ROOM_LIMIT-.02,z:4};p=movePlayer(p,{x:1,z:0},.05);assert.ok(p.x<=ROOM_LIMIT);
-  p={x:-8,z:-2};assert.ok(walkable(p.x,p.z));for(let i=0;i<150;i++)p=movePlayer(p,{x:0,z:1},.05);
+  p={x:-8,z:-1.7};assert.ok(walkable(p.x,p.z));for(let i=0;i<150;i++)p=movePlayer(p,{x:0,z:1},.05);
   assert.ok(p.z<-.29);assert.ok(walkable(p.x,p.z));
   p={x:0,z:2};for(let i=0;i<150;i++)p=movePlayer(p,{x:0,z:-1},.05);
   assert.ok(p.z>.6);assert.ok(walkable(p.x,p.z));

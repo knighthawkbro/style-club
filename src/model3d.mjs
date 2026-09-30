@@ -456,6 +456,17 @@ function addShoes(bones,item,color,skinColor){
   for(const leg of bones.legs){
     const shoe=group(leg.foot,item.name,[0,0,.07]);shoe.userData.itemId=item.id;shoe.userData.fitted=true;
     leg.footSkin.visible=false;
+    if(['blockheel','sparkleheel'].includes(style)){
+      const upper=ball(shoe,'sloped high heel pump',mat,[0,-.03,.065],[.14,.075,.24]);upper.rotation.x=.55;
+      const heelMat=material(colorMix(color,'#e4c478',.4),{metalness:style==='sparkleheel'?.65:.15,roughness:.35});
+      mesh(shoe,'raised heel',new THREE.CylinderGeometry(style==='blockheel'?.086:.034,style==='blockheel'?.09:.04,.30,16),heelMat,[0,-.12,-.115]);
+      ball(shoe,'heel toe platform',sole,[0,-.23,.22],[.139,.045,.118]);
+      ball(shoe,'pump opening',material(skinColor),[0,.014,-.014],[.092,.035,.11]);
+      curve(shoe,'ankle strap',[[-.105,.11,-.02],[-.10,.17,-.11],[0,.18,-.14],[.10,.17,-.11],[.105,.11,-.02]],.018,mat);
+      if(style==='blockheel')bow(shoe,[0,-.028,.21],.045,sole).rotation.x=-.65;
+      else for(const x of[-.065,0,.065]){const gem=group(shoe,'sparkling heel jewel',[x,-.037,.21]);star(gem,.025,detail);gem.rotation.x=-.55;}
+      continue;
+    }
     ball(shoe,'rounded shoe',mat,[0,-.025,.063],[.142,.103,.254]);
     ball(shoe,'shoe sole',sole,[0,-.081,.063],[.147,.045,.262]);
     if(boots){
@@ -714,7 +725,25 @@ export function buildCharacter(outfit,catalog){
     const retained=new Set();root.traverse(part=>{if(part.material)retained.add(part.material);});
     clipped.forEach((copy,original)=>{if(!retained.has(original))original.dispose();});
   }
-  const heldPet=!!outfit.extras.pet,down=new THREE.Vector3(0,-1,0);
+  const heldPet=!!outfit.extras.pet,down=new THREE.Vector3(0,-1,0),heelLift=['blockheel','sparkleheel'].includes(catalog[outfit.shoes.id].shape)?.15:0;
+  let seated=false,skirtRest=null;
+  function drapeSkirt(sitting){
+    if(!skirt||sitting===seated)return;
+    if(!skirtRest){
+      root.updateWorldMatrix(true,true);const inverse=root.matrixWorld.clone().invert();skirtRest=[];
+      skirt.traverse(part=>{if(part.isMesh){const matrix=inverse.clone().multiply(part.matrixWorld);skirtRest.push({part,positions:part.geometry.attributes.position.array.slice(),matrix,inverse:matrix.clone().invert()});}});
+    }
+    for(const {part,positions,matrix,inverse}of skirtRest){
+      const attr=part.geometry.attributes.position;
+      for(let i=0;i<attr.count;i++){
+        const p=new THREE.Vector3().fromArray(positions,i*3);
+        if(sitting){p.applyMatrix4(matrix);const length=Math.max(0,1.65-p.y),lap=Math.min(length,.72),front=THREE.MathUtils.clamp((p.z+.23)/.55,0,1);
+          if(length>0)p.y=Math.max(.92,1.65-lap*.16-Math.max(0,length-.72));p.z+=lap*.98*front;p.applyMatrix4(inverse);}
+        attr.setXYZ(i,p.x,p.y,p.z);
+      }
+      attr.needsUpdate=true;part.geometry.computeVertexNormals();part.geometry.computeBoundingSphere();
+    }
+  }
   function placeArm(arm,hand){
     const shoulder=new THREE.Vector3(arm.side*.337,2.17,0),target=new THREE.Vector3(...hand);
     const direction=target.clone().sub(shoulder),length=Math.min(.948,Math.max(.025,direction.length()));direction.normalize();
@@ -726,17 +755,22 @@ export function buildCharacter(outfit,catalog){
     const lower=new THREE.Quaternion().setFromUnitVectors(down,target.sub(elbow).normalize());
     arm.forearm.quaternion.copy(arm.upper.quaternion).invert().multiply(lower);
   }
-  function applyFrame(frame,style,walking){
+  function applyFrame(frame,style,walking,seatHeight=null){
+    frame={...frame,position:[...frame.position],feet:frame.feet.map(foot=>[...foot])};
+    const sitting=seatHeight!==null;drapeSkirt(sitting);seated=sitting;
+    if(sitting){frame.position=[0,seatHeight-1.51,0];frame.rotation=[0,0,0];frame.torso=[-.025,0,0];frame.head=[0,0,.025];frame.hands=[[-.25,1.37,.42],[.25,1.37,.42]];}
+    else if(heelLift){frame.position=[...frame.position];frame.position[1]+=heelLift;frame.feet=frame.feet.map(foot=>[foot[0],foot[1]+heelLift,foot[2],foot[3]]);}
     root.position.set(...frame.position);root.rotation.set(...frame.rotation);
     // Lower the hips just enough for both legs to reach their planted feet.
-    for(const [i,leg] of bones.legs.entries()){
+    if(!sitting)for(const [i,leg] of bones.legs.entries()){
       const [x,lift,z]=frame.feet[i],dx=x-root.position.x-leg.side*.155,dz=z-root.position.z;
       root.position.y=Math.min(root.position.y,.16+lift+Math.sqrt(Math.max(.1,1.342**2-dx**2-dz**2))-1.51);
     }
     torso.rotation.set(...frame.torso);bones.head.rotation.set(...frame.head);
-    poseHeart.visible=style===4&&walking<.1&&!heldPet;
+    poseHeart.visible=!sitting&&style===4&&walking<.1&&!heldPet;
     bones.arms.forEach((arm,i)=>placeArm(arm,heldPet&&i===0?[-.20,1.93,.55]:frame.hands[i]));
     for(const [i,leg] of bones.legs.entries()){
+      if(sitting){const knee=Math.asin(THREE.MathUtils.clamp((seatHeight-.16-heelLift)/.67,.2,1));leg.hip.rotation.set(-Math.PI/2,0,leg.side*.025);leg.knee.rotation.set(knee,0,0);leg.foot.rotation.set(Math.PI/2-knee,0,-leg.side*.025);continue;}
       const [x,lift,z,pitch]=frame.feet[i],dx=x-root.position.x-leg.side*.155,dy=.16+lift-root.position.y-1.51,dz=z-root.position.z;
       const vertical=Math.hypot(dy,dx),d=Math.min(1.348,Math.hypot(vertical,dz));
       const hipX=-Math.atan2(dz,vertical)-Math.acos(THREE.MathUtils.clamp((.68**2+d*d-.67**2)/(2*.68*d),-1,1));
@@ -745,15 +779,15 @@ export function buildCharacter(outfit,catalog){
       leg.foot.rotation.set(-hipX-kneeX+pitch,0,-hipZ,'XZY');
     }
     if(skirt){
-      const lift=longSkirt?Math.max(0,-root.position.y-.035):0;
+      const lift=!sitting&&longSkirt?Math.max(0,-root.position.y-.035):0;
       skirt.scale.y=1-lift/(1.73-hem);skirt.position.y=1.73*(1-skirt.scale.y);
       root.updateWorldMatrix(true,true);
-      coveredLegs.set(new THREE.Vector3(0,-1,0),hem+lift+.008).applyMatrix4(root.matrixWorld);
+      coveredLegs.set(new THREE.Vector3(0,-1,0),sitting?(longSkirt?.94:1.48):hem+lift+.008).applyMatrix4(root.matrixWorld);
     }
   }
   function pose(time=0,style=0,walking=false){applyFrame(poseFrame(reducedMotion?0:time,style,time*8,walking?1:0),style,walking?1:0);}
   let phase=0,walkWeight=0,previous=null;
-  function animate(time,style,{distance=0,dt=1/60,strut=false}={}){
+  function animate(time,style,{distance=0,dt=1/60,strut=false,seatHeight=null}={}){
     const seconds=Math.min(.05,Math.max(0,dt));phase+=distance/STRIDE_LENGTH*Math.PI*2;
     walkWeight=THREE.MathUtils.damp(walkWeight,distance>.00001?1:0,14,seconds);
     if(walkWeight<.001)walkWeight=0;if(walkWeight>.999)walkWeight=1;
@@ -765,7 +799,7 @@ export function buildCharacter(outfit,catalog){
       frame.hands=frame.hands.map((hand,i)=>hand.map((v,j)=>THREE.MathUtils.lerp(previous.hands[i][j],v,alpha)));
       if(walkWeight<.8)frame.feet=frame.feet.map((foot,i)=>foot.map((v,j)=>THREE.MathUtils.lerp(previous.feet[i][j],v,alpha)));
     }
-    previous=frame;applyFrame(frame,style,walkWeight);
+    previous=frame;applyFrame(frame,style,walkWeight,seatHeight);
   }
   pose();
   return {root,bones,pose,animate,coveredLegs,dispose(){disposeTree(root);root.removeFromParent();}};

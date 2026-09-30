@@ -2,6 +2,24 @@ export const ROOM_LIMIT = 12.25;
 export const PLAYER_RADIUS = .29;
 export const WALK_SPEED = 2.9;
 export const BENCH_BANKS = [-6.8,7].map(z=>({x:0,z,halfX:.70,halfZ:.85}));
+export const ACTIVITIES = [
+  ...BENCH_BANKS.map((bank,i)=>({id:`bench-${i}`,kind:'bench',name:i?'Promenade benches':'Fountain benches',x:bank.x,z:bank.z,approach:[1.3,bank.z-.43],yaw:Math.PI/2})),
+  {id:'salon',kind:'salon',name:'Salon chair',x:7.1,z:-3,approach:[6,-3],yaw:Math.PI/2,storeId:'hair'},
+  {id:'beauty',kind:'beauty',name:'Makeup vanity',x:-7.1,z:-3,approach:[-6,-3],yaw:-Math.PI/2,storeId:'makeup'},
+  ...[['dresses',-1,-9],['tops',-1,3],['bottoms',1,3],['halloween',-1,9],['vip',1,9],['shoes',1,-9]].map(([storeId,side,z])=>({id:`mirror-${storeId}`,kind:'mirror',name:'Dressing mirror',x:side*7.1,z,approach:[side*6.1,z],yaw:side*Math.PI/2,storeId})),
+  {id:'photo',kind:'photo',name:'The photo booth',x:0,z:11.5,approach:[0,10],yaw:Math.PI}
+];
+export function activityDestination(id,position={x:1,z:0}){
+  const source=ACTIVITIES.find(a=>a.id===id);if(!source)return null;
+  const activity={...source,approach:[...source.approach]};
+  if(activity.kind==='bench'){
+    const side=position.x<0?-1:1;
+    activity.approach=[side*1.3,activity.z-.43];activity.yaw=side*Math.PI/2;
+    activity.seat={x:side*.40,z:activity.z-.43,height:.66,yaw:activity.yaw};
+    activity.friendSeat={x:side*.40,z:activity.z+.43,height:.66,yaw:activity.yaw,approach:[side*1.3,activity.z+1.25]};
+  }else if(['salon','beauty'].includes(activity.kind))activity.seat={x:activity.x,z:activity.z,height:.83,yaw:activity.yaw};
+  return activity;
+}
 export const STORES = [
   {id:'dresses',name:'Petal & Thread',detail:'Dresses & daydreams',side:-1,z:-9,color:'#dba5b9'},
   {id:'makeup',name:'GLOW beauty',detail:'Makeup & face paint',side:-1,z:-3,color:'#df9bae',beauty:true},
@@ -57,6 +75,12 @@ export const OBSTACLES = [
   {x:-1.8,z:7.4,halfX:.48,halfZ:.30},
   ...STORES.flatMap(s=>[-2.33,2.33].map(dz=>({x:s.side*4.91,z:s.z+dz,halfX:.29,halfZ:.49}))),
   ...BENCH_BANKS,
+  ...ACTIVITIES.filter(a=>['salon','beauty'].includes(a.kind)).flatMap(a=>[
+    {x:a.x,z:a.z,halfX:.43,halfZ:.43},
+    {x:a.x+Math.sign(a.x)*1.02,z:a.z,halfX:.22,halfZ:.85}
+  ]),
+  ...ACTIVITIES.filter(a=>a.kind==='mirror').map(a=>({x:a.x,z:a.z,halfX:.16,halfZ:.73})),
+  {x:0,z:12,halfX:1.3,halfZ:.2},
   ...[-1,1].flatMap(side=>[-10.8,10.8].map(z=>({x:side*2.85,z,halfX:.32,halfZ:.32})))
 ];
 export function walkable(x,z,obstacles=OBSTACLES,radius=PLAYER_RADIUS){

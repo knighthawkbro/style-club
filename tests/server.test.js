@@ -66,6 +66,8 @@ test('container binding serves the complete game and keeps non-public files priv
     assert.ok((await response.text()).length > 0, file);
     assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
     assert.match(response.headers.get('content-security-policy'), /connect-src 'none'/);
+    for(const header of['cache-control','cdn-cache-control','cloudflare-cdn-cache-control'])assert.equal(response.headers.get(header),'no-store');
+    assert.equal(response.headers.get('clear-site-data'),null,'updates must never erase saved outfits');
   }
   const head = await fetch(server.base, { method: 'HEAD' });
   assert.equal(head.status, 200);
