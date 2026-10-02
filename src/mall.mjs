@@ -96,7 +96,7 @@ export function buildMall(scene,catalog,{makeRack,makeDisplay,makeMirror,label,a
       interactions.push(runway);
     }
   }
-  return{room,wall,walls,interactions,mirrors:activitySpots.mirrors,update(camera,position,time){
+  return{room,wall,walls,interactions,mirrors:activitySpots.mirrors,activityOccluders:activitySpots.occluders,update(camera,position,time){
     walls.left.visible=camera.position.x>-12.3;walls.right.visible=camera.position.x<12.3;walls.back.visible=camera.position.z>-12.3;
     // Lower the wall between the camera and the player, like a dollhouse.
     for(const p of partitions){const crossing=(camera.position.z-p.z)*(position.z-p.z)<0&&camera.position.x*p.side>4.25;

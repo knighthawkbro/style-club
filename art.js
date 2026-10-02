@@ -229,13 +229,34 @@
     else s+=path('M86 62Q107 36 135 39 M92 65Q118 50 138 43 M151 46Q160 64 159 78','none',light,1.6,'opacity=".6"');
     return s;
   }
+  function drawnMakeup(strokes,prefix){
+    let art='',index=0;
+    for(const stroke of (Array.isArray(strokes)?strokes:[]).slice(0,48)){
+      if(!['brush','blush','eraser'].includes(stroke.tool)||!Array.isArray(stroke.points))continue;
+      const color=/^#[a-f0-9]{6}$/i.test(stroke.color)?stroke.color:'#db91a5',size=Number.isFinite(stroke.size)?Math.max(.012,Math.min(.13,stroke.size))*78:3.5;
+      let marks='';
+      for(const mirror of stroke.mirror?[false,true]:[false]){
+        let segment=[];
+        const flush=()=>{if(!segment.length)return;const tint=stroke.tool==='eraser'?'black':color;marks+=segment.length===1?circle(...segment[0],size/2,tint):path(segment.map(([x,y],i)=>`${i?'L':'M'}${x} ${y}`).join(' '),'none',tint,size);segment=[];};
+        for(const point of stroke.points.slice(0,128)){
+          if(!Array.isArray(point)||!point.every(Number.isFinite)){flush();continue;}
+          const x=Math.max(0,Math.min(1,point[0])),y=Math.max(0,Math.min(1,point[1]));segment.push([81+(mirror?1-x:x)*78,43+y*92]);
+        }
+        flush();
+      }
+      if(stroke.tool==='eraser'){const id=`${prefix}-erase-${index++}`;art=`<defs><mask id="${id}" maskUnits="userSpaceOnUse" x="75" y="35" width="95" height="110"><rect x="75" y="35" width="95" height="110" fill="white"/>${marks}</mask></defs><g mask="url(#${id})">${art}</g>`;}
+      else art+=`<g opacity="${stroke.tool==='blush'?.28:1}">${marks}</g>`;
+    }
+    const clip=`${prefix}-paint-clip`;
+    return `<defs><clipPath id="${clip}"><ellipse cx="120" cy="89" rx="39" ry="46"/></clipPath></defs><g clip-path="url(#${clip})">${art}</g>`;
+  }
   function avatar(outfit, items, options={}) {
     const prefix=`doll${++sequence}`,skin=outfit.skin, hairItem=items[outfit.hair], hair=hairItem?.shape||'waves', c=outfit.hairColor;
     const shape=(p,key)=>p&&items[p.id]?garment(items[p.id],p.color,`${prefix}-${key}`):'';
     let s=material(skin,`${prefix}-skin`);
-    const sf=`url(#${prefix}-skin)`, edge=mix(skin,-.2);
+    const sf=`url(#${prefix}-skin)`, edge=mix(skin,-.2),headScale={round:'1.11 .90',heart:'1.04 1',square:'1.02 .96'}[outfit.headShape]||'1 1',headStart=`<g transform="translate(120 89) scale(${headScale}) translate(-120 -89)">`;
     s+=shape(outfit.extras.back,'back');
-    s+=hairBack(hair,c,`${prefix}-hair`);
+    s+=headStart+hairBack(hair,c,`${prefix}-hair`)+'</g>';
     s+=path('M87 237Q104 233 120 246Q135 233 153 241L148 312Q149 349 155 407L137 416Q121 365 122 324L119 278Q116 311 112 326Q107 370 104 417L84 410Q83 375 90 322L85 269Z',sf,edge,1.2);
     s+=path('M79 152Q68 155 61 187L45 238Q39 251 45 259Q50 266 55 258L62 243L78 211L91 176 M161 152Q174 157 180 189L197 237Q203 250 197 259Q191 266 185 258L179 240L164 210L149 176',sf,edge,1.2);
     s+=path('M105 122L105 143Q93 145 80 152Q85 173 94 183L94 211Q85 231 87 252Q120 270 153 252Q156 234 146 211L146 183Q155 173 160 152L135 143L135 122Z',sf,edge,1.2);
@@ -246,9 +267,10 @@
     s+=shape(outfit.bottom,'bottom');
     s+=shape(outfit.top,'top');
     s+=shape(outfit.dress,'dress');
-    s+=ellipse(82,90,8,12,skin)+ellipse(158,90,8,12,skin);
-    s+=ellipse(120,89,39,46,sf,`stroke="${edge}" stroke-width="1"`);
+    s+=headStart+ellipse(82,90,8,12,skin)+ellipse(158,90,8,12,skin);
+    s+=outfit.headShape==='heart'?path('M81 86C78 27 163 27 159 86Q158 114 120 135Q82 114 81 86Z',sf,edge,1):outfit.headShape==='square'?path('M81 84Q81 43 120 43Q159 43 159 84L156 113Q153 135 120 135Q87 135 84 113Z',sf,edge,1):ellipse(120,89,39,46,sf,`stroke="${edge}" stroke-width="1"`);
     s+=ellipse(96,104,10,5,'#dc8b8c','opacity=".3"')+ellipse(144,104,10,5,'#dc8b8c','opacity=".3"');
+    s+=drawnMakeup(outfit.facePaint,prefix);
     for(const x of [104,137]) {
       s+=ellipse(x,90,8.8,9.4,'#fffaf3');s+=ellipse(x+1,90,5.4,7,'#574038');s+=ellipse(x+1,91,3.2,5.4,'#30282a');s+=circle(x+3,87,2.2,'#fff');
       s+=path(`M${x-8} 88Q${x} 80 ${x+8} 87 M${x-8} 86l-3-3`,'none','#49312e',1.8);
@@ -258,11 +280,11 @@
     s+=path('M111 116Q120 123 129 115Q120 131 111 116Z','#aa5863');
     s+=path('M114 117Q120 120 126 117','none','#fff4df',1.7);
     s+=facePaint(items[outfit.makeup]?.shape||'none',outfit.makeupColor||'#db91a5');
-    s+=hairFront(hair,c);
+    s+=hairFront(hair,c)+'</g>';
     s+=shape(outfit.extras.neck,'neck');
-    s+=shape(outfit.extras.head,'head');
+    s+=headStart+shape(outfit.extras.head,'head')+'</g>';
     s+=shape(outfit.extras.bag,'bag');
-    s+=shape(outfit.extras.ears,'ears');s+=shape(outfit.extras.wrist,'wrist');s+=shape(outfit.extras.pet,'pet');
+    s+=headStart+shape(outfit.extras.ears,'ears')+'</g>';s+=shape(outfit.extras.wrist,'wrist');s+=shape(outfit.extras.pet,'pet');
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 450" fill="none" role="img" aria-label="${esc(options.label||'Your styled character')}" class="doll-svg"><title>${esc(options.label||'Your styled character')}</title>${s}</svg>`;
   }
   function thumbnail(item, color) {

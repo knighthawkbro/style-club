@@ -47,6 +47,23 @@ export const STORE_FIXTURES = STORES.flatMap(store=>[
   {x:store.side*8.3,z:store.z-2.5,rotation:0,halfX:2.35,halfZ:.43},
   {x:store.side*8.3,z:store.z+2.5,rotation:Math.PI,halfX:2.35,halfZ:.43}
 ].map((fixture,index)=>({...fixture,id:`${store.id}-${index}`,storeId:store.id,width:4.7})));
+// Keep shop activities inside the open space between the perimeter displays.
+// Constrain both the destination and the interpolated frame: a camera arriving
+// from the promenade must not spend the sitting transition in the next shop.
+export function activityCameraPosition(current,desired,activity,camera,blend=1){
+  const store=STORES.find(s=>s.id===activity?.storeId),mix=(a,b)=>a+(b-a)*blend;
+  let bound=point=>({...point});
+  if(store){
+    const fixtures=STORE_FIXTURES.filter(f=>f.storeId===store.id),back=fixtures[0];
+    const tangent=Math.tan(camera.fov*Math.PI/360);
+    const padding=.2+camera.near*Math.sqrt(1+tangent*tangent*(1+camera.aspect*camera.aspect));
+    const front=4.6+padding,rear=Math.abs(back.x)-back.halfX-padding;
+    const minZ=fixtures[1].z+fixtures[1].halfZ+padding,maxZ=fixtures[2].z-fixtures[2].halfZ-padding;
+    bound=point=>({x:store.side*Math.max(front,Math.min(rear,point.x*store.side)),y:point.y,z:Math.max(minZ,Math.min(maxZ,point.z))});
+  }
+  const end=bound(desired);
+  return bound({x:mix(current.x,end.x),y:mix(current.y,end.y),z:mix(current.z,end.z)});
+}
 export function shopStock(catalog){
   return STORES.flatMap(store=>{
     const stations=STATIONS.filter(s=>s.storeId===store.id),stock=stations.flatMap(s=>itemsForStation(catalog,s));

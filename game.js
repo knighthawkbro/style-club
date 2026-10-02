@@ -175,8 +175,32 @@
   const byId = Object.fromEntries(ITEMS.map(item => [item.id, item]));
   const clone = value => JSON.parse(JSON.stringify(value));
   const piece = id => ({ id, color: byId[id].color });
+  const HEAD_SHAPES=[{id:'oval',name:'Soft oval'},{id:'round',name:'Round'},{id:'heart',name:'Heart'},{id:'square',name:'Soft square'}];
+  const PAINT_LIMITS={strokes:48,points:512,perStroke:128};
+  const MAX_BACKUP_BYTES=4000000;
+  function sanitizeFacePaint(raw){
+    const result=[];let remaining=PAINT_LIMITS.points;
+    for(const stroke of (Array.isArray(raw)?raw:[]).slice(0,PAINT_LIMITS.strokes)){
+      if(!stroke||!['brush','blush','eraser'].includes(stroke.tool)||!Array.isArray(stroke.points))continue;
+      const points=[];
+      for(const point of stroke.points.slice(0,PAINT_LIMITS.perStroke)){
+        if(!remaining)break;
+        if(point===null){if(points.length&&points.at(-1)!==null){points.push(null);remaining--;}continue;}
+        if(!Array.isArray(point)||point.length!==2||!point.every(Number.isFinite))continue;
+        points.push(point.map(n=>Math.round(Math.max(0,Math.min(1,n))*1000)/1000));remaining--;
+      }
+      while(points.at(-1)===null)points.pop();
+      if(points.length)result.push({tool:stroke.tool,color:COLORS.some(c=>c.hex===stroke.color)?stroke.color:COLORS[0].hex,size:Number.isFinite(stroke.size)?Math.round(Math.max(.012,Math.min(.13,stroke.size))*1000)/1000:.045,mirror:stroke.mirror===true,points});
+    }
+    return result;
+  }
+  function addPaintStroke(outfit,stroke){
+    const paint=sanitizeFacePaint(outfit.facePaint),nextStroke=sanitizeFacePaint([stroke])[0];
+    if(!nextStroke||paint.length>=PAINT_LIMITS.strokes||paint.reduce((n,s)=>n+s.points.length,0)+nextStroke.points.length>PAINT_LIMITS.points)return null;
+    const next=clone(outfit);next.facePaint=[...paint,nextStroke];return next;
+  }
   function defaultOutfit() {
-    return { dress: piece('petal'), top: null, bottom: null, shoes: piece('maryjanes'), hair: 'waves', hairColor: '#493027', skin: '#d39c79', makeup: 'fresh-face', makeupColor: '#db91a5', extras: { head: piece('hair-bow'), bag: null, neck: null, back: null, ears:null, wrist:null, pet:null } };
+    return { dress: piece('petal'), top: null, bottom: null, shoes: piece('maryjanes'), hair: 'waves', hairColor: '#493027', skin: '#d39c79', headShape:'oval', facePaint:[], makeup: 'fresh-face', makeupColor: '#db91a5', extras: { head: piece('hair-bow'), bag: null, neck: null, back: null, ears:null, wrist:null, pet:null } };
   }
   function selection(outfit, item) {
     if (item.category === 'hair') return outfit.hair === item.id;
@@ -189,6 +213,7 @@
     const item = Object.hasOwn(byId, id) ? byId[id] : null;
     if (!item) return clone(outfit);
     const next = clone(outfit);
+    if(id==='fresh-face')next.facePaint=[];
     if (item.category !== 'extras' && selection(next, item)) return next;
     if (item.category === 'hair') next.hair = id;
     else if (item.category === 'makeup') { next.makeup = id; next.makeupColor = item.color; }
@@ -202,7 +227,7 @@
   // A drop always puts an item on; only clicking an accessory toggles it off.
   function wear(outfit, id) {
     const item = Object.hasOwn(byId, id) ? byId[id] : null;
-    return item && selection(outfit, item) ? clone(outfit) : equip(outfit, id);
+    return id!=='fresh-face'&&item&&selection(outfit,item)?clone(outfit):equip(outfit,id);
   }
   function recolor(outfit, id, color) {
     const next = clone(outfit);
@@ -223,6 +248,7 @@
     const pick = array => array[Math.min(array.length - 1, Math.floor(random() * array.length))];
     let next = defaultOutfit();
     next.skin = outfit.skin;
+    next.headShape=outfit.headShape||'oval';next.facePaint=sanitizeFacePaint(outfit.facePaint);
     next.makeup = outfit.makeup || 'fresh-face'; next.makeupColor = outfit.makeupColor || '#db91a5';
     const palette = pick(COLORS).hex;
     if (random() > 0.35) next = equip(next, pick(ITEMS.filter(i => i.category === 'dresses')).id);
@@ -259,6 +285,7 @@
     };
     result.makeup = ITEMS.some(i => i.category === 'makeup' && i.id === raw.makeup) ? raw.makeup : 'fresh-face';
     result.makeupColor = COLORS.some(c => c.hex === raw.makeupColor) ? raw.makeupColor : byId[result.makeup].color;
+    result.headShape=HEAD_SHAPES.some(s=>s.id===raw.headShape)?raw.headShape:'oval';result.facePaint=sanitizeFacePaint(raw.facePaint);
     if (result.dress) { result.top = null; result.bottom = null; }
     else { result.top ||= piece('tee'); result.bottom ||= piece('pleated'); }
     for (const slot of ['head', 'bag', 'neck', 'back', 'ears', 'wrist', 'pet']) result.extras[slot] = safePiece(raw.extras?.[slot], 'extras', slot);
@@ -315,7 +342,7 @@
   }
   function remainingSeconds(deadline, now) { return Math.max(0, Math.ceil((deadline - now) / 1000)); }
   function readBackupData(text){
-    if(typeof text!=='string'||text.length>1000000)throw new Error('Choose a Style Club backup smaller than 1 MB.');
+    if(typeof text!=='string'||text.length>MAX_BACKUP_BYTES)throw new Error('Choose a Style Club backup smaller than 4 MB.');
     let raw;try{raw=JSON.parse(text);}catch{throw new Error('That file could not be read. Choose a Style Club backup (.json).');}
     if(raw?.format!=='style-club-lookbook'||raw.version!==1||!Array.isArray(raw.looks))throw new Error('That is not a supported Style Club lookbook backup.');
     return {looks:sanitizeLooks(raw.looks),friendStyles:sanitizeFriendStyles(raw.friendStyles)};
@@ -327,5 +354,5 @@
     if(current.length+additions.length>40)throw new Error('Your lookbook has room for 40 looks. Keep a backup, then remove a few looks before restoring this file.');
     return{looks:[...additions,...current],added:additions.length};
   }
-  return { COLORS, HAIR_COLORS, SKIN_TONES, CATEGORIES, ITEMS, POSES, THEMES, PHOTO_BACKGROUNDS, PHOTO_STICKERS, FRIEND_NAMES, STYLING_REQUESTS, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, sanitizePhoto, sanitizeFriends, sanitizeFriendStyles, matchOutfit, readBackupData, readBackup, mergeLooks, remainingSeconds };
+  return { COLORS, HAIR_COLORS, SKIN_TONES, HEAD_SHAPES, PAINT_LIMITS, MAX_BACKUP_BYTES, CATEGORIES, ITEMS, POSES, THEMES, PHOTO_BACKGROUNDS, PHOTO_STICKERS, FRIEND_NAMES, STYLING_REQUESTS, byId, clone, defaultOutfit, selection, equip, wear, recolor, worn, randomOutfit, score, sanitizeOutfit, sanitizeLooks, sanitizePhoto, sanitizeFriends, sanitizeFriendStyles, sanitizeFacePaint, addPaintStroke, matchOutfit, readBackupData, readBackup, mergeLooks, remainingSeconds };
 });

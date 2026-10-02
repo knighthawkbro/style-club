@@ -18,6 +18,7 @@ export function outfitNotice(before,after,game){
   if(before.extras.pet?.id!==after.extras.pet?.id&&after.extras.pet)return `Aww! ${named(game,after.extras.pet.id)} is such a cute runway buddy!`;
   if(before.hair!==after.hair)return `You tried ${named(game,after.hair)}! Your new hairstyle is so fun!`;
   if(before.hairColor!==after.hairColor){const color=game.HAIR_COLORS.find(c=>c.hex===after.hairColor)?.name;return `${color||'A new color'} hair! What a lovely idea!`;}
+  if(JSON.stringify(before.facePaint||[])!==JSON.stringify(after.facePaint||[])&&after.facePaint?.length)return 'You drew your own face paint! I love seeing your creative ideas!';
   if(before.makeup!==after.makeup||before.makeupColor!==after.makeupColor)return after.makeup==='fresh-face'?'A fresh face and a fresh idea! What will you try next?':`Ooh, ${named(game,after.makeup)}! Your new face paint is so creative!`;
   for(const key of clothingKeys){
     if(before[key]?.id!==after[key]?.id&&after[key])return `You changed into ${named(game,after[key].id)}! That is such a cute choice!`;

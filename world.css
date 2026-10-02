@@ -262,4 +262,33 @@ main { max-width: 1510px; padding-top: 28px; }
 .friend-choice .style-friend-choice { margin-top:7px; background:#fff8eb; color:#885571; border:1px solid #d1adc3; }
 #friends-runway { width:100%; font-size:12px; margin-bottom:12px; }
 .runway-company { padding:10px; border-radius:12px; background:#efe1ee; color:#895e78; font-size:12px; }
+.face-customization { padding:12px; margin:0 0 12px; background:#f4e6ec; border:1px solid #e1cbd5; border-radius:12px; }
+.face-customization-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; font-size:11px; color:#83556d; margin-bottom:9px; }
+.face-customization-heading button { padding:11px; background:#965b7a; color:#fff9ef; border-radius:10px; font-size:11px; }
+.head-shape-options { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }
+.head-shape-options button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:62px; padding:6px 3px; font-size:10px; color:#80566e; border:1px solid #dfc7d2; border-radius:10px; background:#fff9ef; }
+.head-shape-options button[aria-pressed=true] { border:2px solid #995776; background:#edd5e4; }
+.head-shape-icon { display:block; width:21px; height:26px; border-radius:50%; background:#d5a494; border:1.5px solid #98717a; position:relative; }
+.head-shape-icon:after { content:'••'; letter-spacing:4px; font-size:10px; color:#79566b; position:absolute; left:4px; top:4px; }
+.head-round { width:25px; height:24px; }.head-heart { border-radius:48% 48% 46% 46% / 42% 42% 64% 64%; clip-path:polygon(0 0,100% 0,100% 50%,80% 83%,50% 100%,20% 83%,0 50%); }.head-square { width:24px; height:25px; border-radius:40% 40% 32% 32%; }
+.makeup-dialog { width:min(1060px,96vw); max-height:96dvh; overflow:auto; padding:26px; border:1px solid #d5b7c7; border-radius:25px; background:#fffaf3; color:#76536a; }
+.makeup-mirror-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:20px; }
+.makeup-mirror-heading h2 { font:32px var(--serif); margin:6px 0; }.makeup-mirror-heading p:last-child { font-size:12px; line-height:1.5; }.makeup-mirror-heading>button { flex-shrink:0; font-size:12px; }
+.makeup-mirror-layout { display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:25px; }
+.makeup-glass { position:relative; height:min(620px,68dvh); min-height:300px; overflow:hidden; border:10px solid #e4c6d3; border-radius:90px 90px 25px 25px; box-shadow:0 0 0 2px #caa5b8,0 8px 24px #9a748722; background:#f4e5ea; }
+.makeup-canvas { display:block; width:100%; height:100%; touch-action:none; cursor:crosshair; outline-offset:-5px; }
+.paint-cursor { position:absolute; transform:translate(-50%,-50%); border:2px solid #985b7c; border-radius:50%; box-shadow:0 0 0 1px #fff9ec; pointer-events:none; }
+.makeup-mirror-tip { font-size:10px; line-height:1.6; margin-top:12px; text-align:center; color:#99798c; }
+.makeup-worktable fieldset { border:0; padding:0; margin:0 0 15px; min-width:0; }.makeup-worktable legend,.mirror-base-style label { font-size:12px; font-weight:600; display:block; margin-bottom:8px; }
+.makeup-worktable legend span { font-size:10px; font-weight:400; margin-left:6px; color:#997487; }.makeup-worktable .swatches { gap:7px; }
+.makeup-worktable .swatch { width:30px; height:30px; }.makeup-worktable .swatch[aria-pressed=true] { outline:2px solid #995571; outline-offset:2px; }
+.paint-tool-picker,.paint-size-picker { display:flex; gap:6px; }.paint-tool-picker button,.paint-size-picker button { flex:1; min-height:43px; padding:8px 4px; background:#f7eaf0; color:#81556d; border:1px solid #dcbacb; border-radius:10px; font-size:11px; }
+.paint-size-picker button { display:flex; align-items:center; justify-content:center; gap:8px; }.paint-size-picker span { display:block; background:#96627e; border-radius:50%; }
+.paint-tool-picker button[aria-pressed=true],.paint-size-picker button[aria-pressed=true] { background:#955c7a; color:#fff9ef; }.paint-size-picker button[aria-pressed=true] span { background:#fff9ef; }
+.paint-symmetry { width:100%; padding:12px; border:1px solid #ddc4d1; border-radius:11px; background:#fff9ef; color:#83566f; font-size:12px; }.paint-symmetry[aria-pressed=true] { background:#eadcea; border-color:#a37b96; }
+.paint-history { display:flex; gap:7px; margin:10px 0 19px; }.paint-history button { flex:1; font-size:11px; min-height:40px; background:#f3e7ed; border-radius:10px; color:#80556d; }.paint-history button:disabled { opacity:.45; }
+.mirror-base-style select { width:100%; padding:9px; border:1px solid #dbc1ce; border-radius:9px; background:#fffdf8; color:#80566d; font:12px var(--sans); }.mirror-base-style small { display:block; font-size:10px; line-height:1.5; margin:6px 0; }
+.mirror-paint-status { font-size:11px; line-height:1.6; min-height:36px; color:#886179; margin-top:10px; }
+@media(min-width:901px){.fullscreen-game .wardrobe:has(.face-customization:not([hidden])) { overflow-y:auto; padding-right:4px; }.fullscreen-game .wardrobe:has(.face-customization:not([hidden]))>* { flex-shrink:0; }.fullscreen-game .wardrobe:has(.face-customization:not([hidden])) .wardrobe-grid { min-height:180px; }}
+@media(max-width:700px){.makeup-dialog{padding:18px;width:98vw;}.makeup-mirror-heading h2{font-size:26px;}.makeup-mirror-layout{grid-template-columns:1fr;gap:12px;}.makeup-glass{height:46dvh;min-height:290px;}.makeup-worktable{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.makeup-worktable fieldset{margin:0;}.makeup-worktable>fieldset:nth-child(2),.makeup-worktable>fieldset:has(.head-shape-options),.mirror-paint-status{grid-column:1/-1;}.paint-history{margin:0;}.makeup-mirror-tip{font-size:9px;}}
 @media(max-width:700px){.photo-dialog{padding:23px 17px;}.photo-layout{grid-template-columns:1fr;gap:20px;}.photo-heading h2{font-size:27px;}.photo-preview{max-width:430px;margin:auto;}.companion-card{top:59px;right:9px;width:132px;padding:8px;}.companion-card strong{font-size:10px;}.activity-shortcuts button{font-size:10px;}.friend-picker{gap:7px;}.friend-choice img{height:125px;}.friend-choice strong{font-size:18px;}}

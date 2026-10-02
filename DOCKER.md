@@ -52,13 +52,13 @@ git pull --ff-only
 docker compose up -d --build
 ```
 
-Version 5.1 adds styling requests from Poppy, Nova, and Jules, matching outfits, four-person runway shows, gradual chair movements, brush and clothing gestures, and a dedicated heel walk. It includes version 5's shopping companions, salon and makeup activities, dressing mirrors, photo booth, lookbook backups, and high heels. All 117 items are on physical racks and shelves. The Compose ports and tunnel destination stay the same. Reload the game after the container update; saved outfits and lookbooks remain in the same browser storage.
+Version 5.2 adds a front-facing makeup mirror, freehand brushes and blush, optional mirrored strokes, an eraser, undo, and four head shapes. Drawings work on friends too and carry into runway looks, photos, and lookbook backups. Chair and dressing-mirror views stay clear of neighboring walls and displays. Earlier saved outfits remain compatible. The Compose ports and tunnel destination stay the same. Reload the game after the container update; saved outfits and lookbooks remain in the same browser storage.
 
 Docker builds automatically add content-based version tags to the page's script and stylesheet URLs. Changed files load under new URLs. The server also sends `Cache-Control: no-store`, `CDN-Cache-Control: no-store`, and `Cloudflare-CDN-Cache-Control: no-store` on game responses. Keep your proxy's normal cache key, including query strings, and do not override these headers with a Cache Everything rule. An existing tab needs a reload to open the new release; clearing browser site data is unnecessary and erases local saves.
 
 If Cloudflare already holds an old page, purge the cache for this hostname in Cloudflare once after deploying. That clears Cloudflare's copies, not the child's browser saves. If a Cache Rule forces caching, use a cache-bypass rule for the game hostname and set Browser Cache TTL to respect existing headers. See [Cloudflare origin cache control](https://developers.cloudflare.com/cache/concepts/cache-control/) and [CDN cache-control headers](https://developers.cloudflare.com/cache/concepts/cdn-cache-control/). No Cloudflare settings are changed by this repository.
 
-Before clearing any browser site data, use **My lookbook → Download lookbook backup**. Restore the JSON file in the lookbook afterward. Backups include booth photos, group runway looks, and friends' current styles. Older backups remain compatible. Saving remains local to each browser; the Docker container does not store family profiles or backups.
+Before clearing any browser site data, use **My lookbook → Download lookbook backup**. Restore the JSON file in the lookbook afterward. Backups include booth photos, group runway looks, friends' current styles, head shapes, and custom makeup. Backups use compact JSON and restore accepts files up to 4 MB. Older backups remain compatible. Saving remains local to each browser; the Docker container does not store family profiles or backups.
 
 Stop and remove this deployment's container and network:
 

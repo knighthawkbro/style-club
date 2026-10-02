@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { poseFrame, STRIDE_LENGTH, HEEL_STRIDE_LENGTH } from './motion.mjs';
 import { interactionFrame } from './interactions.mjs';
+import { createFacePaint, shapeHead } from './face-paint.mjs';
 
 // All distances are in the same body coordinate system. Garments are complete
 // elliptical surfaces; sleeves and trouser legs share the character's joints.
@@ -104,12 +105,12 @@ function bow(parent, position, size, mat) {
   return b;
 }
 function disposeTree(object) {
-  const geometries = new Set(), materials = new Set();
+  const geometries = new Set(), materials = new Set(), textures=new Set();
   object.traverse(child => {
     if (child.geometry) geometries.add(child.geometry);
-    if (child.material) for (const m of [child.material].flat()) materials.add(m);
+    if (child.material) for (const m of [child.material].flat()) {materials.add(m);if(m.map)textures.add(m.map);}
   });
-  geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
+  geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());textures.forEach(t=>t.dispose());
 }
 
 function addHair(head, style, color) {
@@ -698,6 +699,7 @@ export function buildCharacter(outfit,catalog){
     bones.legs.push({side,hip,knee,foot,thighSkin,shinSkin,footSkin});
   }
   addClothes(root,bones,body,outfit,catalog);addShoes(bones,catalog[outfit.shoes.id],outfit.shoes.color,outfit.skin);addAccessories(root,bones,outfit,catalog);
+  const facePaint=createFacePaint(bones.head,outfit.facePaint||[]);shapeHead(bones.head,outfit.headShape);
   const heartShape=new THREE.Shape();heartShape.moveTo(0,-.12);heartShape.bezierCurveTo(-.26,.01,-.11,.24,0,.095);heartShape.bezierCurveTo(.11,.24,.26,.01,0,-.12);
   const poseHeart=mesh(root,'heart for the heart-hug pose',new THREE.ExtrudeGeometry(heartShape,{depth:.025,bevelEnabled:true,bevelSize:.012,bevelThickness:.008,bevelSegments:2,steps:1}),material('#dc8fae'),[0,1.96,.59]);poseHeart.visible=false;
   // A waist pivot lets the shoulders and fitted clothing turn together.
@@ -819,5 +821,5 @@ export function buildCharacter(outfit,catalog){
     previous=frame;applyFrame(frame,style,walkWeight,seatHeight,seatBlend,action);
   }
   pose();
-  return {root,bones,pose,animate,coveredLegs,dispose(){disposeTree(root);root.removeFromParent();}};
+  return {root,bones,pose,animate,coveredLegs,paintSurface:facePaint.mesh,setFacePaint:facePaint.update,dispose(){disposeTree(root);root.removeFromParent();}};
 }

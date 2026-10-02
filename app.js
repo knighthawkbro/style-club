@@ -11,6 +11,8 @@
   let collection = '', extraFilter = 'all';
   let activityState=null,makeupDraft=null,suggestion=null,photoDraft=null,photoFriends=[],photoAvailable=false,photoFrame=0;
   let stylingName=null,friendStyles={},makeupTool='brush';
+  let makeupMirror=null;
+  const drawing={tool:'brush',color:'#db91a5',size:.045,mirror:true};
   const friendHistory={};
   const portraitCache = new Map();
   let timer = { mode: 'free', status: 'ready', remaining: 180000, deadline: null, interval: null };
@@ -88,6 +90,7 @@
     $('#avatar').setAttribute('aria-label', label);
     $('#avatar').className = boutique ? 'world-host' : `avatar pose-${pose}`;
     $('#undo-button').disabled = editingHistory().length === 0;
+    if($('#makeup-dialog').open&&makeupMirror){makeupMirror.setOutfit(editingOutfit());renderMakeupControls();}
   }
   function renderTheme() {
     const t = theme();
@@ -128,18 +131,50 @@
     $('#color-swatches').innerHTML = colors.map(c => `<button class="swatch ${c.hex === color ? 'active' : ''}" style="--swatch:${c.hex}" data-color="${c.hex}" title="${c.name}" aria-label="${c.name}" aria-pressed="${c.hex === color}" ${active ? '' : 'disabled'}></button>`).join('');
     $('#skin-bar').hidden = category !== 'hair';
     $('#skin-swatches').innerHTML = G.SKIN_TONES.map(c => `<button class="swatch ${c.hex === outfit.skin ? 'active' : ''}" style="--swatch:${c.hex}" data-skin="${c.hex}" title="${c.name} skin tone" aria-label="${c.name} skin tone" aria-pressed="${c.hex === outfit.skin}"></button>`).join('');
+    $('#face-customization').hidden=!['hair','makeup'].includes(category);
+    $('#head-shape-options').innerHTML=headShapeButtons();
+    $('#open-makeup-mirror').hidden=!boutique;
     if (focusItem) grid.querySelector(`[data-item="${focusItem}"]`)?.focus({ preventScroll: true });
     if (focusColor) $('#color-swatches').querySelector(`[data-color="${focusColor}"]`)?.focus({ preventScroll: true });
   }
   function editingOutfit(){return stylingName?friendStyles[stylingName].outfit:outfit;}
   function editingHistory(){return stylingName?(friendHistory[stylingName]||=[]):history;}
-  function changeOutfit(next) {
+  function changeOutfit(next,{gesture=true}={}) {
     const previous=editingOutfit(),undo=editingHistory();undo.push(G.clone(previous));if(undo.length>40)undo.shift();
     const action=previous.makeup!==next.makeup||previous.makeupColor!==next.makeupColor?'brush':previous.hair!==next.hair||previous.hairColor!==next.hairColor?'hair':'dress';
     if(stylingName)friendStyles[stylingName].outfit=next;else outfit=next;
     runwayDraft = null;
     renderAvatar(); renderWardrobe(); persist(); chime();
-    boutique?.performAction(action,{tool:makeupTool,color:next.makeupColor});
+    if(gesture)boutique?.performAction(action,{tool:makeupTool,color:next.makeupColor});
+  }
+  function headShapeButtons(){return G.HEAD_SHAPES.map(shape=>`<button data-head-shape="${shape.id}" aria-pressed="${(editingOutfit().headShape||'oval')===shape.id}"><span class="head-shape-icon head-${shape.id}" aria-hidden="true"></span>${shape.name}</button>`).join('');}
+  function renderMakeupControls(){
+    const current=editingOutfit(),paint=current.facePaint||[];
+    const focusedShape=$('#mirror-head-shapes').contains(document.activeElement)?document.activeElement.dataset.headShape:null;
+    $('#mirror-head-shapes').innerHTML=headShapeButtons();$('#mirror-preset').value=current.makeup||'fresh-face';
+    if(focusedShape)$('#mirror-head-shapes').querySelector(`[data-head-shape="${focusedShape}"]`)?.focus({preventScroll:true});
+    $('#mirror-color-name').textContent=G.COLORS.find(c=>c.hex===drawing.color)?.name||'';
+    document.querySelectorAll('[data-paint-tool]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.paintTool===drawing.tool)));
+    document.querySelectorAll('[data-paint-size]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.paintSize)===drawing.size)));
+    document.querySelectorAll('[data-paint-color]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.paintColor===drawing.color)));
+    $('#mirror-symmetry').setAttribute('aria-pressed',String(drawing.mirror));$('#mirror-symmetry').textContent=drawing.mirror?'♡ Both cheeks together':'♡ One side at a time';
+    $('#undo-paint-stroke').disabled=!paint.length;$('#clear-face-drawing').disabled=!paint.length;
+    makeupMirror?.configure(drawing);
+  }
+  function openMakeupMirror(){
+    if(!boutique)return;
+    $('#makeup-mirror-title').textContent=stylingName?`${stylingName}’s makeup mirror`:'Your makeup mirror';
+    $('#mirror-colors').innerHTML=G.COLORS.map(color=>`<button class="swatch" data-paint-color="${color.hex}" style="--swatch:${color.hex}" aria-label="${color.name}" title="${color.name}" aria-pressed="${drawing.color===color.hex}"></button>`).join('');
+    $('#mirror-preset').innerHTML=G.ITEMS.filter(item=>item.category==='makeup').map(item=>`<option value="${item.id}">${A.esc(item.name)}</option>`).join('');
+    $('#mirror-paint-status').textContent='Pick a color, then draw right on her face. Both cheeks can match!';
+    openDialog('#makeup-dialog');
+    try{
+      makeupMirror ||= new window.Style3D.MakeupMirror($('#makeup-glass'),{catalog:G.byId,limits:G.PAINT_LIMITS,
+        onStatus(text){$('#mirror-paint-status').textContent=text;},
+        onStroke(stroke){const next=G.addPaintStroke(editingOutfit(),stroke);if(next){changeOutfit(next,{gesture:false});$('#mirror-paint-status').textContent=storageWarning?'Drawn for this visit. Download a backup to keep your creations.':'Your own design! Each brush stroke is saved with this character.';}else{makeupMirror.setOutfit(editingOutfit());$('#mirror-paint-status').textContent='Your drawing is full. Undo a stroke or clear your drawing to make room.';}}
+      });
+      makeupMirror.setOutfit(editingOutfit());renderMakeupControls();
+    }catch(error){console.error('Makeup mirror:',error);closeDialog($('#makeup-dialog'));toast('The makeup mirror could not open. Your outfit is safe; try reopening the game.');}
   }
   function chooseCategory(id, focus = false) {
     category = id; selectedId = null; extraFilter='all'; renderWardrobe(true);
@@ -303,7 +338,7 @@
     activityState=activity;makeupDraft=null;
     $('#activity-panel').hidden=!activity;$('#scene').classList.toggle('activity-active',!!activity);$('#beauty-tools').hidden=activity?.kind!=='beauty';
     if(!activity){renderWardrobe();return;}
-    const copy={bench:['A little sit-down','Take a breather together. Your friend will come and sit beside you.'],salon:['The salon chair','Choose a hairstyle and color. See your new look in the salon mirror.'],beauty:['Brushes & blush','Choose a design and color, then drag a brush onto your face or tap Apply.'],mirror:['Your dressing mirror','Try a piece or change its color. The mirror shows your outfit and pose.']}[activity.kind];
+    const copy={bench:['A little sit-down','Take a breather together. Your friend will come and sit beside you.'],salon:['The salon chair','Choose a hairstyle and color. See your new look in the salon mirror.'],beauty:['Your makeup mirror','Choose Draw my own makeup below for a big, clear mirror and your own brushes. Presets are here too.'],mirror:['Your dressing mirror','Try a piece or change its color. The mirror shows your outfit and pose.']}[activity.kind];
     $('#activity-title').textContent=copy[0];$('#activity-copy').textContent=copy[1];
     if(activity.kind==='salon'){collection='';chooseCategory('hair');}
     if(activity.kind==='beauty'){
@@ -386,13 +421,13 @@
     looks.unshift(look);photoDraft.savedId=id;const saved=persist();updateCount();$('#save-photo').disabled=true;$('#save-photo').textContent='Saved to lookbook ✓';$('#photo-status').textContent=saved?'Your moment is in My lookbook. Download it there, or keep creating!':'Saved for this visit. Download a lookbook backup to keep it.';chime('save');
   }
   function backupLooks(){
-    const data=JSON.stringify({format:'style-club-lookbook',version:1,created:new Date().toISOString(),looks:G.sanitizeLooks(looks),friendStyles:G.sanitizeFriendStyles(friendStyles)},null,2);
+    const data=JSON.stringify({format:'style-club-lookbook',version:1,created:new Date().toISOString(),looks:G.sanitizeLooks(looks),friendStyles:G.sanitizeFriendStyles(friendStyles)});
     const url=URL.createObjectURL(new Blob([data],{type:'application/json'})),anchor=document.createElement('a');anchor.href=url;anchor.download=`style-club-lookbook-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Keep this backup file. Restore it here to bring back your outfits and photos.');
   }
   async function restoreLooks(event){
     const file=event.target.files?.[0];if(!file)return;
     try{
-      if(file.size>1000000)throw new Error('Choose a Style Club backup smaller than 1 MB.');
+      if(file.size>G.MAX_BACKUP_BYTES)throw new Error('Choose a Style Club backup smaller than 4 MB.');
       const backup=G.readBackupData(await file.text()),result=G.mergeLooks(looks,backup.looks);let restoredFriends=0;
       for(const [name,style]of Object.entries(backup.friendStyles))if(!Object.hasOwn(friendStyles,name)){friendStyles[name]=style;boutique?.styleFriend(name,style.outfit);restoredFriends++;}
       looks=result.looks;const saved=persist();renderLookbook();
@@ -465,7 +500,11 @@
   document.addEventListener('click', event => {
     const button = event.target.closest('button'); if (!button || button.disabled) return;
     const data = button.dataset;
-    if(data.styleFriend){closeDialog($('#friends-dialog'));startStyling(data.styleFriend);}
+    if(data.headShape){const next=G.clone(editingOutfit());next.headShape=data.headShape;changeOutfit(next,{gesture:false});}
+    else if(data.paintTool){drawing.tool=data.paintTool;renderMakeupControls();}
+    else if(data.paintColor){drawing.color=data.paintColor;if(drawing.tool==='eraser')drawing.tool='brush';renderMakeupControls();}
+    else if(data.paintSize){drawing.size=Number(data.paintSize);renderMakeupControls();}
+    else if(data.styleFriend){closeDialog($('#friends-dialog'));startStyling(data.styleFriend);}
     else if(data.invite){stopStyling();boutique.invite(data.invite);closeDialog($('#friends-dialog'));toast(`${data.invite} is coming along! Pick a shop and explore together.`);}
     else if(data.activity){closeDialog($('#mall-dialog'));boutique?.startActivity(data.activity);toast('Let’s walk over. You can keep exploring whenever you like.');}
     else if(data.brush){makeupTool=data.brush;toast('Your tool is ready. Drag it onto your character, tap your face, or choose Apply.');}
@@ -500,7 +539,7 @@
   $('#shuffle-button').addEventListener('click', () => { changeOutfit(G.randomOutfit(editingOutfit())); toast('A happy little surprise. Make it your own!'); });
   $('#pose-button').addEventListener('click', () => {$('#pose-picker').hidden=!$('#pose-picker').hidden;$('#pose-button').setAttribute('aria-expanded',String(!$('#pose-picker').hidden));if(!$('#pose-picker').hidden){if(!activityState)boutique?.setView('fit');renderPoses();}});
   $('#undo-button').addEventListener('click', () => { const undo=editingHistory();if(!undo.length)return;const previous=undo.pop();if(stylingName)friendStyles[stylingName].outfit=previous;else outfit=previous;runwayDraft=null;renderAvatar();renderWardrobe();persist(); });
-  $('#fresh-start-button').addEventListener('click', () => confirm('A fresh little start?', `This resets ${stylingName?stylingName+'’s':'your'} outfit. Skin tone and saved looks will stay just as they are. You can undo this too.`, 'Start fresh', () => { const next = stylingName?G.matchOutfit(G.defaultOutfit(),editingOutfit()):G.defaultOutfit(); next.skin = editingOutfit().skin; changeOutfit(next); pose = 0; renderPoses();boutique?.setPose(0); renderAvatar(); resetTimer(); }));
+  $('#fresh-start-button').addEventListener('click', () => confirm('A fresh little start?', `This resets ${stylingName?stylingName+'’s':'your'} outfit. Skin tone, head shape, and saved looks will stay just as they are. You can undo this too.`, 'Start fresh', () => { const next = stylingName?G.matchOutfit(G.defaultOutfit(),editingOutfit()):G.defaultOutfit(); next.skin = editingOutfit().skin; next.headShape=editingOutfit().headShape; changeOutfit(next); pose = 0; renderPoses();boutique?.setPose(0); renderAvatar(); resetTimer(); }));
   $('#runway-button').addEventListener('click', showRunway);
   $('#back-to-style').addEventListener('click', () => closeDialog($('#runway-dialog')));
   $('#next-round').addEventListener('click', () => { closeDialog($('#runway-dialog')); surpriseTheme(); toast(`Your next chapter: ${theme().name}. Keep your look or dream up a new one!`); });
@@ -523,6 +562,12 @@
   $('#try-suggestion').addEventListener('click',()=>{if(suggestion){selectedId=suggestion.id;category=G.byId[selectedId].category;collection=G.byId[selectedId].collection||'';changeOutfit(G.wear(editingOutfit(),selectedId));toast('A lovely idea from your shopping friend!');}});
   $('#leave-activity').addEventListener('click',()=>{boutique?.leaveActivity();boutique?.canvas.focus({preventScroll:true});});
   $('#apply-paint').addEventListener('click',()=>applyPaint());$('#wash-paint').addEventListener('click',()=>applyPaint(true));
+  $('#open-makeup-mirror').addEventListener('click',openMakeupMirror);
+  $('#mirror-symmetry').addEventListener('click',()=>{drawing.mirror=!drawing.mirror;renderMakeupControls();});
+  $('#undo-paint-stroke').addEventListener('click',()=>{const next=G.clone(editingOutfit());next.facePaint=(next.facePaint||[]).slice(0,-1);changeOutfit(next,{gesture:false});$('#mirror-paint-status').textContent='Last brush stroke undone. Keep creating!';});
+  $('#clear-face-drawing').addEventListener('click',()=>{const next=G.clone(editingOutfit());next.facePaint=[];changeOutfit(next,{gesture:false});$('#mirror-paint-status').textContent='A clean canvas. Your base style is still here. You can Undo after closing the mirror.';});
+  $('#mirror-wash').addEventListener('click',()=>{changeOutfit(G.equip(editingOutfit(),'fresh-face'),{gesture:false});$('#mirror-paint-status').textContent='All fresh! Your head shape and hairstyle stay just as you chose them.';});
+  $('#mirror-preset').addEventListener('change',()=>{const original=editingOutfit(),next=G.wear(original,$('#mirror-preset').value);next.facePaint=G.clone(original.facePaint||[]);changeOutfit(next,{gesture:false});});
   $('#photo-pose').addEventListener('change',()=>{photoDraft.pose=Number($('#photo-pose').value);renderPhotoBase();});
   $('#photo-name').addEventListener('input',()=>{$('#photo-name').setCustomValidity('');photoChanged();});
   $('#photo-save-form').addEventListener('submit',savePhoto);
@@ -537,7 +582,7 @@
   $('#confirm-action').addEventListener('click', () => { const action = confirmCallback; confirmCallback = null; closeDialog($('#confirm-dialog')); action?.(); });
   document.querySelectorAll('dialog').forEach(dialog => {
     dialog.addEventListener('click', event => { if (event.target !== dialog) return; const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeDialog(dialog); });
-    dialog.addEventListener('close', () => { if (dialog.id === 'confirm-dialog') confirmCallback = null; if (dialog.id === 'runway-dialog') runway3d?.hide();if(dialog.id==='photo-dialog'){cancelAnimationFrame(photoFrame);stickerPointer=null;} });
+    dialog.addEventListener('close', () => { if (dialog.id === 'confirm-dialog') confirmCallback = null; if (dialog.id === 'runway-dialog') runway3d?.hide();if(dialog.id==='makeup-dialog')makeupMirror?.hide();if(dialog.id==='photo-dialog'){cancelAnimationFrame(photoFrame);stickerPointer=null;} });
   });
   $('#category-tabs').addEventListener('keydown', event => {
     const categories=availableCategories(),index = categories.findIndex(c => c.id === category);

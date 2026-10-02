@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import G from '../game.js';
-import {ACTIVITIES,activityDestination,walkable,planPath,advancePath,clearSegment,STATIONS} from '../src/world-rules.mjs';
+import {ACTIVITIES,activityDestination,activityCameraPosition,walkable,planPath,advancePath,clearSegment,STATIONS,STORES,STORE_FIXTURES} from '../src/world-rules.mjs';
 import {ShopperBrain} from '../src/shoppers.mjs';
 import {outfitSuggestion} from '../src/friend-talk.mjs';
 import {buildCharacter} from '../src/model3d.mjs';
@@ -17,6 +17,39 @@ test('each activity can be reached from every shop without crossing furniture',(
     for(const point of path){assert.ok(clearSegment(previous,point));previous=point;}
     assert.ok(Math.hypot(previous.x-target.x,previous.z-target.z)<.01);
   }
+});
+
+test('chair and dressing-mirror cameras stay clear of adjacent walls and displays throughout a turn',()=>{
+  for(const activity of ACTIVITIES.filter(a=>a.storeId))for(const aspect of [.45,1,2.8]){
+    const store=STORES.find(s=>s.id===activity.storeId),camera=new THREE.PerspectiveCamera(47,aspect,.1,70);
+    const target=new THREE.Vector3(activity.x,['salon','beauty'].includes(activity.kind)?2.13:1.45,activity.z);
+    // Begin in the neighboring shop, as the old wide walking camera could.
+    let position={x:store.side*9.5,y:3,z:store.z+4};
+    for(let frame=0;frame<160;frame++){
+      const yaw=activity.yaw+frame*.08,distance=activity.kind==='beauty'?2.35:4.1;
+      const desired={x:target.x+Math.sin(yaw)*distance,y:2.3,z:target.z+Math.cos(yaw)*distance};
+      position=activityCameraPosition(position,desired,activity,camera,1-Math.exp(-.016*7));
+      camera.position.copy(position);camera.lookAt(target);camera.updateMatrixWorld();
+      // Check the whole near plane, rather than just the center of the camera.
+      for(const x of[-1,1])for(const y of[-1,1]){
+        const corner=new THREE.Vector3(x,y,-1).unproject(camera);
+        assert.ok(Math.abs(corner.z-store.z)<2.91,`${activity.id}: next shop's wall`);
+        assert.ok(corner.x*store.side>4.6&&corner.x*store.side<12.56,`${activity.id}: exterior wall or storefront`);
+        for(const fixture of STORE_FIXTURES.filter(f=>f.storeId===store.id))assert.ok(Math.abs(corner.x-fixture.x)>fixture.halfX||Math.abs(corner.z-fixture.z)>fixture.halfZ,`${activity.id}: perimeter display`);
+      }
+    }
+  }
+});
+
+test('safe shop cameras preserve normal smoothing and release the limits when exploring',()=>{
+  const camera={near:.1,fov:47,aspect:1},current={x:8,y:2,z:-3},desired={x:9,y:3,z:-4};
+  assert.deepEqual(activityCameraPosition(current,desired,activityDestination('salon'),camera,.25),{x:8.25,y:2.25,z:-3.25});
+  const outside={x:-20,y:7,z:15};
+  for(const activity of[null,activityDestination('bench-0')])assert.deepEqual(activityCameraPosition(current,outside,activity,camera,.5),{x:-6,y:4.5,z:6});
+  const oldYaw=Math.PI/2+1.05,oldCamera={x:7.1+Math.sin(oldYaw)*4.1*Math.cos(.16),y:2.1,z:-3+Math.cos(oldYaw)*4.1*Math.cos(.16)};
+  assert.ok(oldCamera.z< -6,'the original salon angle was in the neighboring shop');
+  const fixed=activityCameraPosition(oldCamera,oldCamera,activityDestination('salon'),camera);
+  assert.ok(fixed.z> -5&&fixed.z< -1,'the original angle is pulled back into the salon');
 });
 test('invited friends follow between shops, join a bench, stand up and resume their own shopping',()=>{
   for(let index=0;index<3;index++){
@@ -54,6 +87,11 @@ test('boutique activity props have their own physical click targets and outfit m
   const scene=new THREE.Group(),spots=buildActivitySpots(scene,()=>{});
   assert.equal(spots.objects.length,ACTIVITIES.length-2);assert.equal(spots.mirrors.length,8);
   for(const object of spots.objects){assert.ok(object.userData.activity);assert.ok(new THREE.Box3().setFromObject(object).max.y>3);}
+  for(const id of ['salon','beauty']){
+    const chair=spots.objects.find(o=>o.userData.activity===id),occluder=spots.occluders.find(o=>o.id===id).object;
+    occluder.visible=false;let visibleParts=0;chair.traverseVisible(part=>{if(part.isMesh){visibleParts++;assert.ok(new THREE.Box3().setFromObject(part).max.y<1.5,'the mirror and counter leave the close-up');}});
+    assert.ok(visibleParts>=5,'the seat and armrests remain visible');occluder.visible=true;
+  }
 });
 test('high heels stay attached, keep their heels above the floor and do not accumulate height while posing',()=>{
   for(const id of['bow-heels','party-heels']){

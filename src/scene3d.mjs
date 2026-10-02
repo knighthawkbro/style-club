@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { buildCharacter } from './model3d.mjs';
 import { makeRack, makeDisplay, makeMirror } from './shop-displays.mjs';
-import { STATIONS, STORES, ACTIVITIES, activityDestination, OBSTACLES, movePlayer, nearbyStation, planPath, advancePath, storeAt, clearSegment } from './world-rules.mjs';
+import { STATIONS, STORES, ACTIVITIES, activityDestination, activityCameraPosition, OBSTACLES, movePlayer, nearbyStation, planPath, advancePath, storeAt, clearSegment } from './world-rules.mjs';
 import { ShopperBrain } from './shoppers.mjs';
 import { buildMall } from './mall.mjs';
 import { makeAudience } from './audience.mjs';
 import { outfitNotice, friendlyGreeting, outfitSuggestion } from './friend-talk.mjs';
 import { SeatMotion, ACTION_DURATION } from './interactions.mjs';
+import { mirrorCameraFrame } from './makeup-mirror.mjs';
+export { MakeupMirror } from './makeup-mirror.mjs';
 export { STATIONS, STORES, ACTIVITIES };
 export { photo, stickerImage } from './photo-booth.mjs';
 
@@ -98,13 +100,13 @@ export class Boutique {
   enterActivity(activity){
     this.activityGoal=null;this.path=[];this.destinationStation=null;this.keys.clear();this.virtual.clear();
     if(activity.kind==='photo'){this.onActivity(activity);return;}
-    this.activity=activity;if(activity.seat)this.seatMotion.set(activity.seat,this.position,this.yaw,this.reduced);this.yaw=activity.yaw;this.cameraYaw=activity.yaw+(activity.kind==='bench'?.4:1.05);this.pitch=.16;this.faceShop=false;this.cameraGoal=null;
+    this.activity=activity;this.departingActivity=null;if(activity.seat)this.seatMotion.set(activity.seat,this.position,this.yaw,this.reduced);this.yaw=activity.yaw;this.cameraYaw=activity.yaw+(activity.kind==='bench'?.4:0);this.pitch=.16;this.faceShop=false;this.cameraGoal=null;
     if(activity.friendSeat)this.companion?.brain.sitWith(activity.friendSeat);
     this.canvas.dataset.activity=activity.id;this.onActivity(activity);this.refreshMirror();
   }
   leaveActivity(){
     this.activityGoal=null;if(!this.activity)return;
-    this.seatMotion.set(null,this.position,this.yaw,this.reduced);this.activity=null;this.companion?.brain.stand();this.pitch=.43;this.onActivity(null);this.canvas.dataset.activity='';
+    this.departingActivity=this.activity.seat?this.activity:null;this.seatMotion.set(null,this.position,this.yaw,this.reduced);this.activity=null;this.companion?.brain.stand();this.pitch=.43;this.onActivity(null);this.canvas.dataset.activity='';
   }
   refreshMirror(){
     const mirror=this.environment?.mirrors.find(m=>m.id===this.activity?.id);if(!mirror||!this.outfit)return;
@@ -243,14 +245,19 @@ export class Boutique {
     if(this.cameraGoal!=null)this.cameraYaw+=Math.atan2(Math.sin(this.cameraGoal-this.cameraYaw),Math.cos(this.cameraGoal-this.cameraYaw))*(1-Math.exp(-dt*4));
     if(this.faceShop&&!travelled)this.yaw+=Math.atan2(Math.sin(this.cameraYaw-this.yaw),Math.cos(this.cameraYaw-this.yaw))*(1-Math.exp(-dt*5));
     const seat=this.activity?.seat,position=this.seatMotion.update(dt,this.position,this.yaw);
-    if(this.character){this.anchor.position.set(position.x,position.blend?0:this.view==='walk'?-.04:.08,position.z);this.anchor.rotation.y=position.yaw;this.character.animate(time,this.poseStyle,{distance:travelled,dt,seatHeight:position.blend?position.height:null,seatBlend:position.blend,action});}
+    const beauty=this.activity?.kind==='beauty',vanity=beauty||this.activity?.kind==='salon';
+    if(this.character){this.anchor.position.set(position.x,position.blend?0:this.view==='walk'?-.04:.08,position.z);this.anchor.rotation.y=position.yaw;this.character.animate(time,vanity?0:this.poseStyle,{distance:travelled,dt,seatHeight:position.blend?position.height:null,seatBlend:position.blend,action});}
     this.canvas.dataset.seatBlend=position.blend.toFixed(3);
     const distance=this.activity?.kind==='beauty'?2.65:this.activity?.kind==='bench'?3.9:this.activity?4.1:this.view==='face'?2.20:this.view==='fit'?6.1:9.7,height=seat?(this.activity.kind==='beauty'?2.13:1.45):this.view==='face'?2.88:this.view==='fit'?1.92:1.55;
     this.target.set(position.x,height,position.z);
     const desired=new THREE.Vector3(position.x+Math.sin(this.cameraYaw)*distance*Math.cos(this.pitch),height+Math.sin(this.pitch)*distance,position.z+Math.cos(this.cameraYaw)*distance*Math.cos(this.pitch));
-    this.camera.position.lerp(desired,dt?1-Math.exp(-dt*7):1);this.camera.lookAt(this.target);
+    if(vanity&&this.character){this.anchor.updateWorldMatrix(true,true);const face=this.character.bones.head.getWorldPosition(new THREE.Vector3()),frame=mirrorCameraFrame(face,beauty?this.activity.yaw:this.cameraYaw,this.camera.aspect);this.target.copy(frame.target);desired.copy(frame.position);if(!beauty)desired.sub(frame.target).multiplyScalar(1.2).add(frame.target);}
+    if(!this.seatMotion.busy)this.departingActivity=null;
+    const cameraActivity=this.view==='walk'?(this.activity||this.departingActivity):null;
+    this.camera.position.copy(activityCameraPosition(this.camera.position,desired,cameraActivity,this.camera,dt?1-Math.exp(-dt*7):1));this.camera.lookAt(this.target);
+    for(const fixture of this.environment.activityOccluders)fixture.object.visible=fixture.id!==cameraActivity?.id;
     this.environment.room.visible=this.view==='walk';this.fittingStage.visible=this.view!=='walk';this.fittingStage.position.set(this.position.x,0,this.position.z);
-    this.shoppers.visible=this.view==='walk'&&this.friendsVisible;
+    this.shoppers.visible=this.view==='walk'&&this.friendsVisible&&!vanity;
     for(const npc of this.npcs){
       const result=this.shoppers.visible&&!this.dragging&&!npc.seatMotion.busy?npc.brain.tick(dt,{x:position.x,z:position.z,yaw:this.yaw},this.npcs.filter(other=>other!==npc).map(other=>other.brain.position)):{walking:false,pose:0};
       if(result.changed)this.dressShopper(npc);
@@ -260,10 +267,11 @@ export class Boutique {
       npc.anchor.position.set(npcPosition.x,npcPosition.blend?0:-.04,npcPosition.z);npc.anchor.rotation.y=npcPosition.yaw;npc.character.animate(time+this.npcs.indexOf(npc),result.pose,{distance:result.distance||0,dt,seatHeight:npcPosition.blend?npcPosition.height/.88:null,seatBlend:npcPosition.blend});
     }
     if(!this.lastNpcReport||time-this.lastNpcReport>.5){this.canvas.dataset.shoppers=JSON.stringify(this.npcs.map(({brain})=>({name:brain.name,activity:brain.description(),x:+brain.position.x.toFixed(2),z:+brain.position.z.toFixed(2),changes:brain.changes})));this.lastNpcReport=time;}
-    this.environment.update(this.camera,this.position,time);
+    this.environment.update(this.camera,position,time);
     this.updateFriends();
     this.renderer.render(this.scene,this.camera);
     this.canvas.dataset.facing=this.cameraYaw.toFixed(2);this.canvas.dataset.view=this.view;this.canvas.dataset.ready='true';
+    this.canvas.dataset.cameraPosition=this.camera.position.toArray().map(n=>n.toFixed(3)).join(',');
   }
   loop(){if(this.disposed)return;this.frame=requestAnimationFrame(()=>this.loop());const now=performance.now(),dt=Math.min((now-this.lastFrame)/1000,.05);this.lastFrame=now;if(this.active&&!document.hidden&&!document.querySelector('dialog[open]')){this.elapsed+=dt;this.draw(dt);}}
   portrait(outfit){return portrait(outfit,this.catalog);}
